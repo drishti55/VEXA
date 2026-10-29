@@ -1,0 +1,11 @@
+{
+  "name": "pilot-mock-all-architectures",
+  "execution_mode": "mock",
+  "tasks": "all",
+  "architectures": ["sequential", "hierarchical", "event_driven", "blackboard"],
+  "prompt_variants": ["baseline"],
+  "repeats": 2,
+  "seed": 1234,
+  "tool_transport": "direct",
+  "verifier_backend": "crewai"
+}

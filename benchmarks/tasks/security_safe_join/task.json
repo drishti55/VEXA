@@ -1,0 +1,14 @@
+{
+  "id": "security_safe_join",
+  "title": "Prevent path traversal",
+  "category": "security",
+  "difficulty": "medium",
+  "requirement": "files.safe_join(base, user_path) builds a path for serving user files but allows \"../\" traversal\nand absolute paths. It must return the resolved path only if it stays inside base, and raise\nPermissionError otherwise.",
+  "acceptance_criteria": [
+    "safe_join(base, 'a/b.txt') stays inside base",
+    "safe_join(base, '../x') raises PermissionError",
+    "safe_join(base, '/etc/passwd') raises PermissionError"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

@@ -1,0 +1,13 @@
+{
+  "id": "api_health_route",
+  "title": "Add a health endpoint",
+  "category": "api",
+  "difficulty": "easy",
+  "requirement": "app.py implements a tiny router: handle(method, path) returns (status_code, body_dict).\nAdd GET /health returning (200, {\"status\": \"ok\"}). Other methods on /health must return\n(405, {\"error\": \"method not allowed\"}). Unknown paths keep returning 404.",
+  "acceptance_criteria": [
+    "handle('GET', '/health') == (200, {'status': 'ok'})",
+    "handle('POST', '/health')[0] == 405"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

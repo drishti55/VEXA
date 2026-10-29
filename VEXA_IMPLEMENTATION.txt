@@ -1,0 +1,2365 @@
+Absolutely bro. Now that we have **VEXA finalized as the project direction**, let's treat this like an actual final-year engineering/research project rather than just an AI demo.
+
+I’m going to give you the **complete blueprint**: what VEXA does, architecture, agents, tools, RAG, MCP, memory, three architectures, evaluation, dataset, UI, database, implementation phases, GitHub structure, team division, and what you should be able to defend in viva.
+
+The design below is based directly on your course handout and project guidelines. Your course emphasizes multi-agent orchestration, planning, tool use, RAG, CrewAI/ADK, memory, MCP/A2A, guardrails, evaluation, observability and automated coding/debugging.   The project guidelines additionally require differentiated prompting, RAG, tools, MCP/A2A, per-run traces, at least 40 runs, and architecture comparison. 
+
+---
+
+# 🚀 VEXA
+
+## **VEXA: Architecture-Aware Autonomous Multi-Agent Software Engineering System**
+
+### One-line explanation
+
+> **VEXA takes a natural-language software requirement or an existing repository, autonomously understands the problem, plans the solution, writes/modifies code, runs tests, diagnoses failures, repairs the implementation, and verifies the final software — while experimentally evaluating different multi-agent architectures.**
+
+---
+
+# 1. What does VEXA actually do?
+
+Suppose you open VEXA and type:
+
+> **"Build a FastAPI task management API with JWT authentication, PostgreSQL, CRUD operations, Docker support and unit tests."**
+
+You don't manually create:
+
+```text
+main.py
+models.py
+routes.py
+database.py
+schemas.py
+Dockerfile
+tests/
+requirements.txt
+```
+
+VEXA does it.
+
+The high-level process is:
+
+```text
+                 USER PROMPT
+                     │
+                     ▼
+             REQUIREMENT ANALYSIS
+                     │
+                     ▼
+              PROJECT PLANNING
+                     │
+                     ▼
+             ARCHITECTURE DESIGN
+                     │
+                     ▼
+              CODE GENERATION
+                     │
+                     ▼
+              TEST GENERATION
+                     │
+                     ▼
+              TEST EXECUTION
+                     │
+              ┌──────┴──────┐
+              │             │
+             PASS          FAIL
+              │             │
+              ▼             ▼
+         VERIFICATION    DEBUGGING
+              │             │
+              │             ▼
+              │           PATCH
+              │             │
+              │             ▼
+              │       TEST AGAIN
+              │             │
+              └──────┬──────┘
+                     ▼
+               CODE REVIEW
+                     │
+                     ▼
+              FINAL VERIFICATION
+                     │
+                     ▼
+              WORKING PROJECT
+```
+
+That's the **product**.
+
+But VEXA has another purpose.
+
+---
+
+# 2. The research component
+
+This is what makes the project significantly stronger.
+
+We don't simply build one agent architecture.
+
+We build **three versions of the same VEXA system**:
+
+### Architecture 1
+
+**Sequential**
+
+### Architecture 2
+
+**Hierarchical**
+
+### Architecture 3
+
+**Event-Driven**
+
+Then give all three the **same software-engineering tasks**.
+
+And measure:
+
+```text
+Task Success
+Correctness
+Test Pass Rate
+Latency
+Token Usage
+Estimated Cost
+Iterations
+Failure Rate
+Agent Bottlenecks
+```
+
+The guidelines explicitly identify hierarchical, workflow/sequential and event-driven architectures as architecture patterns to consider. 
+
+So our central research question becomes:
+
+> **How does multi-agent architecture affect the effectiveness, latency, reliability and cost of autonomous software engineering?**
+
+---
+
+# 3. VEXA has TWO operating modes
+
+This is important.
+
+## MODE A — BUILD
+
+Starting from an empty workspace.
+
+```text
+User:
+"Build a URL shortener using FastAPI and PostgreSQL."
+```
+
+VEXA:
+
+```text
+Requirement
+    ↓
+Plan
+    ↓
+Architecture
+    ↓
+Create files
+    ↓
+Install dependencies
+    ↓
+Generate tests
+    ↓
+Run
+    ↓
+Fix
+    ↓
+Verify
+```
+
+---
+
+# 4. MODE B — MODIFY
+
+User uploads/provides an existing repository.
+
+Example:
+
+> "The login endpoint returns 500 when an invalid JWT is provided. Fix it and add regression tests."
+
+VEXA:
+
+```text
+Repository
+    ↓
+Understand codebase
+    ↓
+Retrieve relevant files
+    ↓
+Locate authentication
+    ↓
+Understand dependency relationships
+    ↓
+Plan patch
+    ↓
+Modify code
+    ↓
+Run tests
+    ↓
+Debug if necessary
+    ↓
+Verify
+```
+
+This is where **Project RAG** becomes extremely useful.
+
+---
+
+# 5. The VEXA agents
+
+I recommend **six primary agents**.
+
+Don't create 15 agents just for the sake of saying "multi-agent."
+
+Every agent should have a clear responsibility.
+
+---
+
+## Agent 1 — Requirement Analyst
+
+### Job
+
+Understand what the user actually wants.
+
+Input:
+
+```text
+"Build a task management API."
+```
+
+Output:
+
+```json
+{
+  "requirements": [
+    "user authentication",
+    "task CRUD",
+    "REST API",
+    "database"
+  ],
+  "constraints": [],
+  "acceptance_criteria": [...]
+}
+```
+
+It answers:
+
+* What is being requested?
+* What are the constraints?
+* What constitutes success?
+* What needs to be built?
+
+---
+
+# 6. Agent 2 — Project Analyst / Codebase Analyst
+
+This agent is especially important for existing repositories.
+
+It investigates:
+
+```text
+project structure
+source files
+dependencies
+classes
+functions
+APIs
+tests
+configuration
+README
+```
+
+Tools:
+
+```text
+search_code()
+read_file()
+inspect_project()
+parse_ast()
+dependency_graph()
+```
+
+It produces a **project context map**.
+
+---
+
+# 7. Agent 3 — Planning Agent
+
+Takes requirements + project context.
+
+Produces:
+
+```text
+Task 1
+Task 2
+Task 3
+...
+```
+
+Example:
+
+```text
+1. Create database model
+2. Create Pydantic schemas
+3. Add CRUD service
+4. Add authentication
+5. Create routes
+6. Add tests
+7. Configure Docker
+```
+
+This agent is also our **prompt-strategy experiment**.
+
+We can compare:
+
+```text
+Structured Planning
+       vs
+ReAct
+       vs
+COTS-style prompting
+```
+
+The project guidelines explicitly require at least one agent to be evaluated under different prompt strategies. 
+
+---
+
+# 8. Agent 4 — Coding Agent
+
+This is the actual implementation agent.
+
+It receives:
+
+```text
+requirements
++
+plan
++
+RAG context
++
+existing code
+```
+
+and uses tools:
+
+```text
+create_file()
+read_file()
+edit_file()
+patch_file()
+search_code()
+git_diff()
+```
+
+Example:
+
+```text
+Create:
+app/models/task.py
+
+Modify:
+app/routes/tasks.py
+
+Create:
+tests/test_tasks.py
+```
+
+---
+
+# 9. Agent 5 — Testing Agent
+
+This agent is not just:
+
+> "Run pytest."
+
+It should:
+
+### Generate tests
+
+and
+
+### Execute tests.
+
+Tools:
+
+```text
+run_tests()
+run_pytest()
+run_linter()
+run_type_checker()
+```
+
+Example result:
+
+```json
+{
+  "passed": 43,
+  "failed": 3,
+  "errors": 1,
+  "duration": 17.2
+}
+```
+
+---
+
+# 10. Agent 6 — Debugger / Verifier
+
+I would actually make this conceptually two stages.
+
+### Debugger
+
+Consumes:
+
+```text
+stack trace
++
+failed tests
++
+changed files
++
+previous attempts
+```
+
+and determines:
+
+```text
+Root Cause
+↓
+Required Fix
+↓
+Patch Strategy
+```
+
+Then sends it back to Coding Agent.
+
+---
+
+### Verification Agent
+
+Finally asks:
+
+```text
+Did the original requirements get satisfied?
+```
+
+It checks:
+
+```text
+✓ Tests passing
+✓ Requirements satisfied
+✓ No unintended modifications
+✓ No obvious regression
+✓ Patch matches requested behaviour
+✓ Code quality acceptable
+```
+
+---
+
+# 11. The autonomous loop
+
+This is one of the most important parts of VEXA.
+
+It should **not** stop at the first generated code.
+
+Instead:
+
+```text
+              CODE
+                ↓
+              TEST
+                ↓
+        ┌──── PASS? ────┐
+        │               │
+       YES              NO
+        │               │
+        ▼               ▼
+     REVIEW          DEBUGGER
+                        │
+                        ▼
+                     PATCH
+                        │
+                        ▼
+                       TEST
+```
+
+We impose a maximum:
+
+```text
+MAX_ITERATIONS = 5
+```
+
+to prevent infinite loops.
+
+So VEXA can autonomously reason:
+
+> "The implementation failed because the database session isn't being closed."
+
+then:
+
+> "I'll patch the dependency."
+
+then:
+
+> "Run the tests again."
+
+then:
+
+> "All tests pass."
+
+---
+
+# 12. Project RAG
+
+Your guidelines make RAG necessary for at least one agent. 
+
+We'll implement:
+
+# **Codebase RAG**
+
+The repository gets indexed.
+
+```text
+Repository
+     │
+     ▼
+File Discovery
+     │
+     ▼
+Code Parser
+     │
+     ▼
+Semantic Chunks
+     │
+     ▼
+Embeddings
+     │
+     ▼
+Vector DB
+     │
+     ▼
+Retriever
+     │
+     ▼
+Agent
+```
+
+Instead of giving the LLM the entire repository, VEXA retrieves relevant context.
+
+---
+
+# 13. Code-aware RAG
+
+I don't want us to do only:
+
+```python
+text.split("\n")
+```
+
+We can make it more sophisticated.
+
+Chunks can represent:
+
+```text
+Python module
+class
+function
+method
+test
+README section
+configuration
+API endpoint
+```
+
+Each chunk stores metadata:
+
+```json
+{
+  "file": "app/auth/service.py",
+  "symbol": "authenticate_user",
+  "type": "function",
+  "language": "python",
+  "start_line": 42,
+  "end_line": 81
+}
+```
+
+This will make the RAG layer much more defensible in viva.
+
+---
+
+# 14. Memory
+
+VEXA needs memory at multiple levels.
+
+## Short-term memory
+
+Current task.
+
+```text
+requirements
+plan
+current files
+errors
+current iteration
+```
+
+## Project memory
+
+Knowledge about the repository.
+
+```text
+architecture
+dependencies
+important modules
+previous changes
+```
+
+## Run memory
+
+Previous attempts:
+
+```text
+Attempt 1 → failed
+Attempt 2 → failed
+Attempt 3 → passed
+```
+
+This prevents the debugger from repeatedly making the same mistake.
+
+---
+
+# 15. Tools
+
+Tools are what make these actual agents rather than chatbots.
+
+We can define:
+
+### Repository tools
+
+```text
+list_files()
+read_file()
+write_file()
+patch_file()
+delete_file()
+search_code()
+```
+
+### Analysis tools
+
+```text
+parse_ast()
+dependency_analysis()
+find_symbol()
+find_references()
+```
+
+### Git tools
+
+```text
+git_diff()
+git_status()
+git_log()
+create_branch()
+```
+
+### Execution tools
+
+```text
+run_tests()
+run_linter()
+run_type_checker()
+run_build()
+```
+
+### Project tools
+
+```text
+install_dependency()
+inspect_environment()
+generate_project_tree()
+```
+
+The project guidelines specifically ask you to define tools used by the agents. 
+
+---
+
+# 16. MCP
+
+We'll put the tools behind an MCP layer.
+
+Conceptually:
+
+```text
+                 VEXA AGENTS
+                      │
+                      ▼
+                 MCP SERVER
+                      │
+       ┌──────────────┼──────────────┐
+       ▼              ▼              ▼
+  Filesystem        Git           Testing
+     Tools          Tools           Tools
+```
+
+That gives us an actual demonstration of **agent-to-tool interoperability**, which is directly covered in the course. 
+
+---
+
+# 17. Sandbox
+
+This is essential.
+
+Never allow an LLM to freely execute arbitrary commands on your development machine.
+
+VEXA should create:
+
+```text
+workspace/
+   task_001/
+```
+
+and execute code inside a Docker container.
+
+Example:
+
+```text
+VEXA
+ │
+ └── Docker Sandbox
+       │
+       ├── repository
+       ├── dependencies
+       ├── tests
+       └── execution
+```
+
+Allowed:
+
+```text
+read code
+modify code
+run tests
+run build
+run linter
+```
+
+Blocked:
+
+```text
+system-level modifications
+credential access
+arbitrary host filesystem access
+dangerous commands
+```
+
+This directly supports the course's safety, guardrail and secure deployment objectives. 
+
+---
+
+# 18. The three architectures
+
+This is the **research heart**.
+
+---
+
+## Architecture A — Sequential
+
+```text
+Analyst
+   ↓
+Planner
+   ↓
+Coder
+   ↓
+Tester
+   ↓
+Debugger
+   ↓
+Verifier
+```
+
+Every agent waits.
+
+### Question
+
+Does this simple structure provide good reliability with low coordination overhead?
+
+---
+
+# 19. Architecture B — Hierarchical
+
+Introduce:
+
+# Manager Agent
+
+```text
+                   MANAGER
+                  /   |   \
+                 /    |    \
+           Analyst  Planner  Tester
+              │        │       │
+              └────────┼───────┘
+                       │
+                     Coder
+                       │
+                    Debugger
+                       │
+                    Verifier
+```
+
+Manager decides:
+
+```text
+who should work
+what should happen next
+whether retry is needed
+when task is complete
+```
+
+This maps nicely to the course's coordinator/sub-agent/task delegation concepts. 
+
+---
+
+# 20. Architecture C — Event Driven
+
+Instead of direct agent-to-agent calls:
+
+```text
+CODE_CHANGED
+TEST_FAILED
+DEBUG_REQUIRED
+PATCH_CREATED
+TEST_PASSED
+VERIFICATION_REQUIRED
+```
+
+Agents subscribe to events.
+
+Example:
+
+```text
+TEST_FAILED
+     │
+     ▼
+Debugger wakes
+     │
+     ▼
+DEBUG_REQUIRED
+     │
+     ▼
+Coder wakes
+     │
+     ▼
+CODE_CHANGED
+     │
+     ▼
+Tester wakes
+```
+
+This gives us a genuinely different orchestration model.
+
+---
+
+# 21. Communication experiment
+
+The guidelines explicitly mention:
+
+```text
+Blackboard
+Peer-to-Peer
+Broadcast
+MCP
+```
+
+as communication choices. 
+
+We can implement a controlled subset.
+
+### Blackboard
+
+Shared state:
+
+```text
+PostgreSQL / Redis
+```
+
+Agents read/write shared task state.
+
+### P2P
+
+```text
+Agent A → Agent B
+```
+
+direct messages.
+
+### MCP
+
+Agents communicate with tools/resources through MCP interfaces.
+
+We don't necessarily need every possible combination. We'll choose the combinations that produce a clean experiment.
+
+---
+
+# 22. Architecture evaluation
+
+Every architecture receives the same task set.
+
+For example:
+
+```text
+Task 01
+Task 02
+Task 03
+...
+Task 40
+```
+
+Then:
+
+```text
+                 Sequential
+                     │
+40 tasks ────────────┼────────────
+                     │
+                 Hierarchical
+                     │
+40 tasks ────────────┼────────────
+                     │
+                 Event Driven
+```
+
+This is a controlled experiment.
+
+---
+
+# 23. The 40-task benchmark
+
+We need at least 40 runs according to the project guidelines. 
+
+I'd actually target:
+
+# **50 tasks**
+
+so we have some buffer.
+
+Categories:
+
+| Category       | Example                     |
+| -------------- | --------------------------- |
+| Bug Fix        | Fix authentication error    |
+| Feature        | Add API endpoint            |
+| Refactoring    | Split service module        |
+| Testing        | Add missing tests           |
+| Error Handling | Handle invalid input        |
+| API            | Modify endpoint behaviour   |
+| Database       | Add model/query             |
+| Performance    | Optimize operation          |
+| Configuration  | Docker/env changes          |
+| Security       | Fix insecure implementation |
+
+---
+
+# 24. Benchmark repository design
+
+We should not randomly pick huge GitHub repositories.
+
+We'll create/use a controlled set of small-to-medium Python repositories.
+
+For example:
+
+```text
+repo_01_task_manager
+repo_02_blog_api
+repo_03_expense_tracker
+repo_04_inventory_api
+repo_05_auth_service
+```
+
+Then define known tasks.
+
+Each task has:
+
+```text
+repository
+initial commit
+issue description
+expected behaviour
+test cases
+ground truth
+```
+
+This is extremely useful because we know whether VEXA actually solved the problem.
+
+---
+
+# 25. Evaluation metrics
+
+Now the serious research part.
+
+## 1. Task Success Rate
+
+```text
+successful tasks
+────────────────── × 100
+total tasks
+```
+
+---
+
+## 2. Test Pass Rate
+
+```text
+passing tests
+─────────────── × 100
+total tests
+```
+
+---
+
+## 3. Requirement Satisfaction
+
+Did the implementation satisfy the original user requirements?
+
+Measured through deterministic tests plus structured verification.
+
+---
+
+## 4. Regression Rate
+
+Did VEXA fix one thing while breaking another?
+
+```text
+regressions
+──────────── × 100
+successful patches
+```
+
+---
+
+## 5. Latency
+
+Measure:
+
+```text
+Total Run Time
+```
+
+and:
+
+```text
+Agent Time
+Tool Time
+LLM Time
+Test Time
+```
+
+---
+
+# 26. Agent bottleneck analysis
+
+This directly matches your professor's requirement.
+
+Suppose a run gives:
+
+```text
+Analyst      5 sec
+Planner      9 sec
+Coder       35 sec
+Tester      20 sec
+Debugger    28 sec
+Verifier     8 sec
+```
+
+We can identify:
+
+```text
+Coder = primary latency contributor
+Debugger = secondary bottleneck
+```
+
+Across 50 runs, we can calculate average and percentile latency.
+
+---
+
+# 27. Cost analysis
+
+Every LLM call gets:
+
+```text
+model
+input tokens
+output tokens
+latency
+estimated cost
+agent
+run
+```
+
+Then:
+
+```text
+Run Cost
+=
+Σ Agent LLM Costs
+```
+
+And:
+
+```text
+Agent Cost Share
+=
+Agent Cost / Total Run Cost
+```
+
+This answers your professor's:
+
+> Which agent is consuming money?
+
+---
+
+# 28. LLM comparison
+
+We can compare models based on **role suitability**, not just overall performance.
+
+For example:
+
+```text
+Planner → Model A
+Coder → Model B
+Debugger → Model C
+```
+
+Potential research question:
+
+> Does the best model for planning also perform best for debugging or code generation?
+
+The guidelines explicitly mention investigating which LLM is better for which agent. 
+
+---
+
+# 29. Prompt experiment
+
+For Planner:
+
+```text
+Prompt Strategy A
+Structured Planning
+```
+
+versus
+
+```text
+Prompt Strategy B
+ReAct
+```
+
+versus
+
+```text
+Prompt Strategy C
+COTS
+```
+
+Measure:
+
+```text
+Plan quality
+Implementation success
+Latency
+Token usage
+```
+
+---
+
+# 30. RAG experiment
+
+We can also run:
+
+```text
+RAG OFF
+```
+
+versus:
+
+```text
+RAG ON
+```
+
+and measure:
+
+```text
+Task success
+File selection accuracy
+Number of unnecessary files modified
+Latency
+Token consumption
+```
+
+This gives RAG an actual experimental purpose instead of being there just because the professor said "use RAG."
+
+---
+
+# 31. Observability system
+
+Every execution produces a trace.
+
+Example:
+
+```text
+RUN #027
+│
+├── Requirement Agent
+│    ├── latency: 4.3s
+│    ├── tokens: 1,240
+│    └── result: SUCCESS
+│
+├── Planner
+│    ├── latency: 7.8s
+│    └── result: SUCCESS
+│
+├── Coder
+│    ├── latency: 31.4s
+│    ├── files_changed: 5
+│    └── result: SUCCESS
+│
+├── Tester
+│    ├── latency: 16.2s
+│    └── result: FAILED
+│
+├── Debugger
+│    ├── latency: 23.1s
+│    └── root_cause: ...
+│
+├── Coder
+│    └── PATCH
+│
+├── Tester
+│    └── PASS
+│
+└── Verifier
+     └── PASS
+```
+
+The guidelines explicitly require logs/traces and per-run evaluation. 
+
+---
+
+# 32. VEXA Dashboard
+
+This is what I want your final demo to look like.
+
+### Page 1 — Build
+
+```text
+┌───────────────────────────────────────────────┐
+│ VEXA                              RUN PROJECT │
+├───────────────────────────────────────────────┤
+│                                               │
+│ Describe what you want to build...            │
+│                                               │
+│ ┌───────────────────────────────────────────┐ │
+│ │ Build a FastAPI expense tracker with...  │ │
+│ └───────────────────────────────────────────┘ │
+│                                               │
+│ Architecture                                  │
+│ [Hierarchical ▼]                              │
+│                                               │
+│ LLM                                           │
+│ [Model ▼]                                     │
+│                                               │
+│              [ BUILD PROJECT ]                │
+└───────────────────────────────────────────────┘
+```
+
+---
+
+# 33. Page 2 — Live Execution
+
+```text
+VEXA RUN #042
+
+Requirement Analyst        ✓
+Project Analyst            ✓
+Planner                    ✓
+Coder                      ● RUNNING
+Tester                     ○
+Debugger                   ○
+Verifier                   ○
+
+Iteration 1 / 5
+
+Current action:
+Creating authentication middleware...
+
+Files changed:
++ auth.py
++ models.py
++ routes/auth.py
+```
+
+---
+
+# 34. Page 3 — Agent Graph
+
+Show:
+
+```text
+        MANAGER
+       /       \
+ ANALYST       PLANNER
+                 │
+                CODER
+                 │
+               TESTER
+              /      \
+           PASS      FAIL
+                      │
+                   DEBUGGER
+                      │
+                     CODER
+```
+
+And animate the active agent.
+
+This is great for the demo.
+
+---
+
+# 35. Page 4 — Repository
+
+Show:
+
+```text
+project/
+├── app/
+│   ├── main.py
+│   ├── models.py
+│   ├── routes/
+│   └── services/
+├── tests/
+├── Dockerfile
+└── requirements.txt
+```
+
+with generated code/diff.
+
+---
+
+# 36. Page 5 — Evaluation
+
+This is the research dashboard.
+
+```text
+Architecture Comparison
+
+                 Sequential  Hierarchical  Event
+Success             --          --          --
+Latency             --          --          --
+Cost                --          --          --
+Iterations          --          --          --
+Regression          --          --          --
+```
+
+Numbers will be populated from real experiments.
+
+---
+
+# 37. Page 6 — Agent Bottlenecks
+
+Something like:
+
+```text
+Agent Performance
+
+Coder
+████████████████████  34.2 sec
+
+Debugger
+██████████████       24.1 sec
+
+Tester
+██████████           18.2 sec
+
+Planner
+█████                 8.1 sec
+```
+
+And:
+
+```text
+Most frequent failure source:
+Debugger → incorrect root-cause identification
+```
+
+Again, based on actual experiment data.
+
+---
+
+# 38. Backend architecture
+
+I'd structure the backend roughly like:
+
+```text
+vexa/
+│
+├── backend/
+│   ├── api/
+│   ├── agents/
+│   ├── architectures/
+│   ├── tools/
+│   ├── rag/
+│   ├── memory/
+│   ├── evaluation/
+│   ├── observability/
+│   ├── sandbox/
+│   ├── mcp/
+│   ├── llm/
+│   └── database/
+│
+├── frontend/
+│
+├── benchmarks/
+│
+├── experiments/
+│
+├── configs/
+│
+├── tests/
+│
+├── docker/
+│
+└── docs/
+```
+
+---
+
+# 39. Agent code structure
+
+Something like:
+
+```text
+agents/
+│
+├── requirement_agent.py
+├── project_agent.py
+├── planner_agent.py
+├── coder_agent.py
+├── tester_agent.py
+├── debugger_agent.py
+└── verifier_agent.py
+```
+
+Notice we're not mixing agent logic with architecture logic.
+
+---
+
+# 40. Architecture abstraction
+
+This is important for experimentation.
+
+Instead of writing:
+
+```python
+if architecture == "sequential":
+   ...
+```
+
+everywhere, define a common interface.
+
+Conceptually:
+
+```text
+Architecture
+     │
+ ┌───┼───────────────┐
+ ↓   ↓               ↓
+Sequential     Hierarchical     EventDriven
+```
+
+All three receive:
+
+```text
+Task
+Repository
+Configuration
+```
+
+and produce:
+
+```text
+ExecutionResult
+```
+
+That makes the experiment scientifically cleaner.
+
+---
+
+# 41. Database
+
+PostgreSQL tables could include:
+
+```text
+projects
+tasks
+runs
+agents
+agent_runs
+tool_calls
+llm_calls
+metrics
+test_results
+file_changes
+events
+experiments
+```
+
+For example:
+
+### `runs`
+
+```text
+run_id
+task_id
+architecture
+communication_protocol
+llm_configuration
+start_time
+end_time
+success
+total_latency
+total_cost
+iterations
+```
+
+### `agent_runs`
+
+```text
+agent_run_id
+run_id
+agent_name
+start_time
+end_time
+latency
+input_tokens
+output_tokens
+cost
+status
+error
+```
+
+---
+
+# 42. Technology stack
+
+My proposed stack:
+
+### Agent framework
+
+**CrewAI**
+
+Your course specifically covers CrewAI agents, tools, memory, tasks, crews and flows. 
+
+### Backend
+
+```text
+Python
+FastAPI
+```
+
+### Database
+
+```text
+PostgreSQL
+```
+
+### Vector DB
+
+```text
+FAISS / Chroma
+```
+
+### RAG
+
+```text
+Code-aware retrieval
+Embeddings
+Vector search
+```
+
+### MCP
+
+```text
+Python MCP server
+```
+
+### Sandbox
+
+```text
+Docker
+```
+
+### Frontend
+
+```text
+React
+```
+
+### Observability
+
+Initially:
+
+```text
+PostgreSQL
+structured JSON logs
+```
+
+Then we can add tracing if needed.
+
+### Git
+
+```text
+GitPython / subprocess
+```
+
+### Code analysis
+
+```text
+Python AST
+tree-sitter if needed
+```
+
+---
+
+# 43. Full system flow
+
+Here's the final thing I want you to remember for viva:
+
+```text
+                         USER
+                           │
+                           │
+                    Natural Language
+                           │
+                           ▼
+                ┌────────────────────┐
+                │ REQUIREMENT AGENT  │
+                └──────────┬─────────┘
+                           │
+                           ▼
+                ┌────────────────────┐
+                │ PROJECT ANALYST    │
+                │                    │
+                │ Project RAG        │
+                │ AST Analysis       │
+                │ Dependency Graph   │
+                └──────────┬─────────┘
+                           │
+                           ▼
+                ┌────────────────────┐
+                │  PLANNING AGENT    │
+                └──────────┬─────────┘
+                           │
+                           ▼
+             ┌────────────────────────────┐
+             │     ARCHITECTURE LAYER     │
+             │                            │
+             │ Sequential                 │
+             │ Hierarchical               │
+             │ Event Driven               │
+             └─────────────┬──────────────┘
+                           │
+                           ▼
+                ┌────────────────────┐
+                │    CODING AGENT    │
+                └──────────┬─────────┘
+                           │
+                           ▼
+                    MCP TOOL LAYER
+                           │
+             ┌─────────────┼─────────────┐
+             ▼             ▼             ▼
+         Filesystem       Git         Sandbox
+                           │
+                           ▼
+                    TESTING AGENT
+                           │
+                     ┌─────┴─────┐
+                     │           │
+                   PASS         FAIL
+                     │           │
+                     │           ▼
+                     │      DEBUGGER
+                     │           │
+                     │           ▼
+                     │       CODER
+                     │           │
+                     │           ▼
+                     │         TEST
+                     │
+                     ▼
+                  VERIFIER
+                     │
+                     ▼
+                 FINAL CODE
+                     │
+                     ▼
+              OBSERVABILITY
+                     │
+        ┌────────────┼─────────────┐
+        ▼            ▼             ▼
+      Cost         Latency       Accuracy
+        │            │             │
+        └────────────┼─────────────┘
+                     ▼
+               VEXA DASHBOARD
+```
+
+---
+
+# 44. Implementation roadmap
+
+Now the important part.
+
+**Do NOT try to build everything simultaneously.**
+
+We'll build it incrementally.
+
+---
+
+## PHASE 0 — Research Design
+
+### Goal
+
+Freeze:
+
+* problem statement
+* objectives
+* research questions
+* agents
+* architectures
+* metrics
+* benchmark
+* tech stack
+
+**Deliverable:**
+
+```text
+VEXA Project Charter
+```
+
+---
+
+# PHASE 1 — Basic Single-Agent Prototype
+
+Before multi-agent.
+
+Build:
+
+```text
+User prompt
+   ↓
+LLM
+   ↓
+Tools
+   ↓
+Code
+```
+
+Example:
+
+```text
+"Create a FastAPI hello-world API."
+```
+
+VEXA creates:
+
+```text
+main.py
+requirements.txt
+```
+
+and runs it.
+
+### Why?
+
+Because we need a baseline.
+
+---
+
+# PHASE 2 — Tool Layer
+
+Implement:
+
+```text
+read_file
+write_file
+patch_file
+search_code
+run_tests
+git_diff
+```
+
+Then sandbox them.
+
+---
+
+# PHASE 3 — Multi-Agent V1
+
+Implement:
+
+```text
+Requirement
+Planner
+Coder
+Tester
+Debugger
+Verifier
+```
+
+using CrewAI.
+
+This becomes:
+
+# **VEXA-MAS v1**
+
+---
+
+# PHASE 4 — Project RAG
+
+Add:
+
+```text
+Repository ingestion
+↓
+Code parsing
+↓
+Embedding
+↓
+Vector DB
+↓
+Retrieval
+```
+
+Connect it to Project Analyst.
+
+---
+
+# PHASE 5 — Autonomous Repair Loop
+
+Implement:
+
+```text
+TEST FAIL
+ ↓
+DEBUG
+ ↓
+PATCH
+ ↓
+TEST
+```
+
+with:
+
+```text
+MAX_ITERATIONS = 5
+```
+
+This is where VEXA starts feeling autonomous.
+
+---
+
+# PHASE 6 — Architecture Engine
+
+Implement:
+
+```text
+SequentialArchitecture
+HierarchicalArchitecture
+EventDrivenArchitecture
+```
+
+All three use the same agents.
+
+**This separation is extremely important.**
+
+---
+
+# PHASE 7 — MCP
+
+Expose:
+
+```text
+filesystem
+Git
+testing
+sandbox
+```
+
+as MCP tools/resources.
+
+---
+
+# PHASE 8 — Observability
+
+Log:
+
+```text
+every agent
+every LLM call
+every tool
+every error
+every iteration
+every test
+every file change
+```
+
+---
+
+# PHASE 9 — Evaluation Framework
+
+Build:
+
+```text
+benchmark runner
+```
+
+that automatically executes:
+
+```text
+50 tasks
+×
+architectures
+×
+experimental configurations
+```
+
+and stores results.
+
+---
+
+# PHASE 10 — Experiments
+
+Run controlled experiments.
+
+### Experiment A
+
+```text
+Sequential
+vs
+Hierarchical
+vs
+Event Driven
+```
+
+### Experiment B
+
+```text
+LLM configurations
+```
+
+### Experiment C
+
+```text
+Prompt strategies
+```
+
+### Experiment D
+
+```text
+RAG ON
+vs
+RAG OFF
+```
+
+### Experiment E
+
+```text
+Communication mechanism
+```
+
+---
+
+# PHASE 11 — Dashboard
+
+Build:
+
+```text
+Build interface
+Run monitor
+Agent graph
+Repository viewer
+Diff viewer
+Metrics
+Architecture comparison
+Cost analysis
+Agent bottleneck analysis
+```
+
+---
+
+# PHASE 12 — Final Validation
+
+Run your complete benchmark.
+
+At least:
+
+# **50 runs**
+
+rather than barely meeting the 40-run requirement.
+
+Then produce:
+
+```text
+results.csv
+experiment_config.json
+metrics.json
+charts
+tables
+```
+
+---
+
+# 45. What your final demo should look like
+
+This is the demo I would aim for.
+
+You walk into viva.
+
+Open VEXA.
+
+Type:
+
+> **"Build a FastAPI inventory management API with PostgreSQL. Users should be able to create, update, delete and retrieve products. Add validation and unit tests."**
+
+Click:
+
+# BUILD
+
+Then the screen shows:
+
+```text
+Requirement Analysis ✓
+Project Planning ✓
+Architecture Design ✓
+Generating Code...
+```
+
+Then:
+
+```text
+Files Created: 17
+Files Modified: 0
+Tests Generated: 23
+```
+
+Then:
+
+```text
+Running tests...
+
+19 PASS
+4 FAIL
+```
+
+VEXA automatically:
+
+```text
+Debugger activated
+Root cause identified
+Patch generated
+```
+
+Then:
+
+```text
+23 PASS
+```
+
+Finally:
+
+```text
+╔════════════════════════════════════╗
+║        BUILD COMPLETED             ║
+╠════════════════════════════════════╣
+║ Tests          23 / 23             ║
+║ Iterations     2                   ║
+║ Time           74.2 sec            ║
+║ LLM Cost       $X                  ║
+║ Files Changed  17                  ║
+╚════════════════════════════════════╝
+```
+
+Then you click:
+
+# **View Execution Trace**
+
+and show the professor:
+
+```text
+Planner
+   ↓
+Coder
+   ↓
+Tester
+   ↓
+Debugger
+   ↓
+Coder
+   ↓
+Tester
+   ↓
+Verifier
+```
+
+**That's a real Agentic AI demo.**
+
+---
+
+# 46. Then the killer part of the demo
+
+You say:
+
+> "Now I'll run the exact same task using our three architectures."
+
+Then:
+
+### Sequential
+
+```text
+Success: ...
+Latency: ...
+Cost: ...
+```
+
+### Hierarchical
+
+```text
+Success: ...
+Latency: ...
+Cost: ...
+```
+
+### Event Driven
+
+```text
+Success: ...
+Latency: ...
+Cost: ...
+```
+
+And show your experimental dashboard.
+
+Now the professor isn't just seeing:
+
+> "Look sir, AI generated code."
+
+They're seeing:
+
+> **"We built an autonomous MAS and experimentally studied its architectural behaviour."**
+
+That's the distinction I want VEXA to have.
+
+---
+
+# 47. What we should NOT do
+
+There are several traps.
+
+### ❌ Don't make 15 useless agents
+
+Your guidelines explicitly prohibit trivial agent projects such as generic Research/Writer/Proposal/Travel agents. 
+
+### ❌ Don't make it only a chatbot
+
+It must actually modify/run/test software.
+
+### ❌ Don't use RAG just for decoration
+
+It needs to demonstrably help repository understanding.
+
+### ❌ Don't fabricate experimental results
+
+Every metric must come from actual runs.
+
+### ❌ Don't only compare architectures theoretically
+
+Run the same benchmark through them.
+
+### ❌ Don't make one person responsible only for UI
+
+The handout explicitly says team members must contribute across agents, tools, orchestrator and integrations, and be capable of explaining/modifying the system during evaluation. 
+
+### ❌ Don't make it dependent on one huge prompt
+
+The point is orchestration.
+
+---
+
+# 48. What makes VEXA "final-year level"
+
+The final system has **five layers of contribution**:
+
+### Layer 1 — Autonomous coding
+
+```text
+Prompt → Working software
+```
+
+### Layer 2 — Multi-agent reasoning
+
+```text
+Analyst
+Planner
+Coder
+Tester
+Debugger
+Verifier
+```
+
+### Layer 3 — Agentic infrastructure
+
+```text
+RAG
+Memory
+Tools
+MCP
+Sandbox
+Guardrails
+```
+
+### Layer 4 — Multi-agent architecture research
+
+```text
+Sequential
+Hierarchical
+Event-driven
+```
+
+### Layer 5 — Experimental evaluation
+
+```text
+Accuracy
+Success
+Latency
+Cost
+Iterations
+Bottlenecks
+LLM comparison
+Prompt comparison
+RAG comparison
+```
+
+**That's the project.**
+
+---
+
+# 49. Final deliverables
+
+By the end, you should have:
+
+```text
+VEXA/
+│
+├── Working Agentic Application
+│
+├── 3 Architecture Implementations
+│
+├── Project RAG
+│
+├── MCP Tool Layer
+│
+├── Sandboxed Code Executor
+│
+├── Memory System
+│
+├── Observability System
+│
+├── Evaluation Framework
+│
+├── 50-task Benchmark
+│
+├── Experimental Dataset
+│
+├── Evaluation Dashboard
+│
+├── GitHub Repository
+│
+├── Final Report
+│
+└── Final Presentation
+```
+
+The course requires a functional final application, source repository, report, presentation/demo and contribution matrix; it also mandates a public GitHub repository.  
+
+---
+
+# 50. The research story in one picture
+
+Ultimately, your project story is:
+
+```text
+                         VEXA
+                          │
+          ┌───────────────┴────────────────┐
+          │                                │
+     PRODUCT SIDE                    RESEARCH SIDE
+          │                                │
+          ▼                                ▼
+   Prompt → Software              Architecture Comparison
+          │                                │
+          ▼                     ┌──────────┼──────────┐
+   Autonomous Agents            ▼          ▼          ▼
+          │                 Sequential Hierarchical Event
+          ▼
+   Code → Test → Debug
+          │
+          ▼
+      Working App
+                                           │
+                                           ▼
+                              ┌─────────────────────────┐
+                              │ Evaluation              │
+                              │                         │
+                              │ Success                 │
+                              │ Accuracy                │
+                              │ Latency                 │
+                              │ Cost                    │
+                              │ Iterations              │
+                              │ Bottlenecks             │
+                              └─────────────────────────┘
+```
+
+## The final thesis of VEXA
+
+> **VEXA investigates whether autonomous software engineering can be made more reliable and efficient through specialized multi-agent collaboration, and empirically studies how architecture, communication, prompting, retrieval and model selection influence system performance.**
+
+That is the sentence I'd keep at the center of the entire project.
+
+---
+
+## 🔥 Our build order from here
+
+I suggest we **don't jump into coding blindly**.
+
+We'll now do:
+
+**Step 1 → Freeze the final Project Charter**
+**Step 2 → Define the exact problem statement**
+**Step 3 → Define objectives + research questions**
+**Step 4 → Freeze the 6 agents**
+**Step 5 → Freeze the 3 architectures**
+**Step 6 → Design the complete methodology diagram**
+**Step 7 → Design the 40/50-task benchmark**
+**Step 8 → Define every metric mathematically**
+**Step 9 → Define the database/schema**
+**Step 10 → Define the folder/repository structure**
+**Step 11 → Build VEXA v0.1 from scratch**
+**Step 12 → Build the Phase-1 synopsis from the finalized design**
+
+And because your Phase-1 evaluation specifically asks for **problem definition, objectives/outcomes, partial methodology, feasibility/resource planning, synopsis, timeline, responsibility matrix and individual understanding**, we should make those documents directly from this architecture rather than writing a generic synopsis first.  
+
+**This is the version of VEXA I would lock as the project.**

@@ -1,0 +1,14 @@
+{
+  "id": "refactor_discount",
+  "title": "Extract duplicated discount logic",
+  "category": "refactoring",
+  "difficulty": "medium",
+  "requirement": "pricing.py computes percentage discounts in two places (member_price and sale_price) with\nduplicated rounding logic. Extract a function apply_discount(price, percent) that returns the\ndiscounted price rounded to 2 decimals and use it from both functions. Behaviour must not change.",
+  "acceptance_criteria": [
+    "apply_discount(100, 15) == 85.0",
+    "member_price/sale_price unchanged",
+    "no duplicated rounding"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

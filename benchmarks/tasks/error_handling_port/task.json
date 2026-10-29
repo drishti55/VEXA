@@ -1,0 +1,14 @@
+{
+  "id": "error_handling_port",
+  "title": "Validate port numbers",
+  "category": "error_handling",
+  "difficulty": "easy",
+  "requirement": "parse_port(value) in netconfig.py crashes with an unhelpful error or returns invalid ports.\nIt must return an int for strings like \"8080\" (surrounding whitespace allowed) and raise\nValueError for non-numeric input or values outside 1-65535.",
+  "acceptance_criteria": [
+    "parse_port(' 8080 ') == 8080",
+    "parse_port('abc') raises ValueError",
+    "parse_port('70000') raises ValueError"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

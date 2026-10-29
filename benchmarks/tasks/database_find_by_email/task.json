@@ -1,0 +1,14 @@
+{
+  "id": "database_find_by_email",
+  "title": "Case-insensitive user lookup",
+  "category": "database",
+  "difficulty": "medium",
+  "requirement": "users.py has a UserRepo backed by sqlite3. Add find_by_email(email) that returns the user dict\n{\"id\", \"name\", \"email\"} matching the email case-insensitively, or None if there is none.\nUse a parameterised query (no string formatting of user input).",
+  "acceptance_criteria": [
+    "find_by_email('ADA@example.com') finds ada@example.com",
+    "unknown email -> None",
+    "parameterised SQL"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

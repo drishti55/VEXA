@@ -1,0 +1,5 @@
+cd ~/Desktop/VEXA-main
+python -m uvicorn backend.main:app --port 8000      # not .venv/bin/uvicorn (see below)
+cd frontend && npm run dev
+python -m pytest -q                                 # backend tests
+cd frontend && npx tsc --noEmit -p tsconfig.app.json && npm run build

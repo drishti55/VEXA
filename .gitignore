@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment files (NEVER commit secrets)
+.env
+.env.local
+.env.*.local
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Ruff / linting
+.ruff_cache/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# mypy
+.mypy_cache/
+
+# Docker
+*.dockerignore
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Benchmark outputs (generated, not committed)
+experiments/outputs/
+benchmarks/results/
+
+# VEXA workspaces
+workspaces/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# VEXA run registry (SQLite) and benchmark results
+data/

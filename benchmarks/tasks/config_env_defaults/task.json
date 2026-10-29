@@ -1,0 +1,14 @@
+{
+  "id": "config_env_defaults",
+  "title": "Settings defaults and parsing",
+  "category": "configuration",
+  "difficulty": "medium",
+  "requirement": "load_settings(env) in settings.py crashes when PORT or DEBUG is missing. Return a dict with\nport (int, default 8080) and debug (bool, default False; \"1\", \"true\", \"yes\" in any case are True,\neverything else False). Invalid PORT values must raise ValueError.",
+  "acceptance_criteria": [
+    "load_settings({}) == {'port': 8080, 'debug': False}",
+    "DEBUG='TRUE' -> True",
+    "PORT='x' raises ValueError"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

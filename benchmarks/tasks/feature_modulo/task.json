@@ -1,0 +1,13 @@
+{
+  "id": "feature_modulo",
+  "title": "Add modulo to calculator",
+  "category": "feature",
+  "difficulty": "easy",
+  "requirement": "Add a modulo(a, b) function to calculator.py that returns a % b and raises ValueError\nwith the message \"Cannot divide by zero\" when b is 0, like divide() does.",
+  "acceptance_criteria": [
+    "modulo(10, 3) == 1",
+    "modulo(10, 0) raises ValueError('Cannot divide by zero')"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

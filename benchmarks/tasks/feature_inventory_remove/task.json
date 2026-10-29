@@ -1,0 +1,14 @@
+{
+  "id": "feature_inventory_remove",
+  "title": "Remove stock with validation",
+  "category": "feature",
+  "difficulty": "medium",
+  "requirement": "inventory.py has an Inventory class with add(name, qty) and count(name). Add remove(name, qty)\nthat decreases stock, raises ValueError if qty is not positive, and raises KeyError if the item is\nunknown or there is not enough stock (leaving stock unchanged). Items reaching 0 are removed.",
+  "acceptance_criteria": [
+    "remove reduces stock",
+    "insufficient stock raises KeyError and keeps stock",
+    "qty <= 0 raises ValueError"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

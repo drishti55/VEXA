@@ -1,0 +1,14 @@
+{
+  "id": "performance_fib",
+  "title": "Make fibonacci fast",
+  "category": "performance",
+  "difficulty": "easy",
+  "requirement": "fib(n) in mathutil.py is exponential and fib(80) never finishes. Make it run in linear time\n(fib(80) must return 23416728348467685 in well under a second) without changing results.",
+  "acceptance_criteria": [
+    "fib(80) == 23416728348467685 quickly",
+    "fib(0) == 0",
+    "fib(1) == 1"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

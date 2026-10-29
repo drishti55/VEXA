@@ -1,0 +1,22 @@
+{
+  "name": "pilot-real-architectures",
+  "execution_mode": "real",
+  "tasks": ["bugfix_pagination", "feature_modulo", "security_safe_join"],
+  "architectures": ["sequential", "hierarchical", "event_driven", "blackboard"],
+  "prompt_variants": ["baseline"],
+  "models": [
+    {
+      "provider": "REPLACE_ME (e.g. groq | openai | gemini)",
+      "model": "REPLACE_ME (LiteLLM model string)",
+      "input_cost_per_1m": null,
+      "output_cost_per_1m": null
+    }
+  ],
+  "repeats": 3,
+  "seed": 1234,
+  "temperature": 0.1,
+  "debug_max_iter": 3,
+  "tool_transport": "mcp",
+  "verifier_backend": "crewai",
+  "max_cost_usd": null
+}
