@@ -1,0 +1,15 @@
+.git
+.venv
+**/node_modules
+**/__pycache__
+.pytest_cache
+.ruff_cache
+frontend/dist
+frontend/test-results
+workspaces
+data
+.env
+.env.*
+*.mp4
+*.pptx
+docs/*.pdf

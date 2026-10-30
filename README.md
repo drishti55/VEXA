@@ -67,7 +67,7 @@ Mock runs never build an LLM client and never touch the network. An unknown `exe
 
 In the dashboard pick a workspace, an **architecture**, a **prompt strategy**, the **Verifier** (Google ADK over A2A, or CrewAI) and **agent tools** (MCP or direct), enter the requirement and click **RUN VEXA**. For real mode, enter a model and use **Test model** first (a 1-token call) — the provider is inferred from the model prefix.
 
-Tabs: **Overview** (the actual dispatch sequence, incl. manager revisions), **Coordination** (manager decisions/reviews/briefs, events, A2A and MCP traffic), **State** (blackboard read/write matrix), **Trace** (span hierarchy, per-agent metrics, tool calls, errors/retries, guardrail decisions), **Report** (JSON/Markdown download). Use *Open a previous run* to reload any persisted run; the last viewed run is restored after a page refresh.
+Tabs: **Overview** (the actual dispatch sequence, incl. manager revisions), **Coordination** (manager decisions/reviews/briefs, events, A2A and MCP traffic), **State** (blackboard read/write matrix), **Trace** (span hierarchy, per-agent metrics, tool calls, errors/retries, guardrail decisions), **Report** (JSON/Markdown download). Use *Open a previous run* to reload any persisted run; the dashboard opens empty, it does not re-open the last run.
 
 From the API:
 

@@ -142,13 +142,17 @@ class RunHandle:
         a failed plan has nothing for the Coder to implement; a failed Coder
         that changed no file has nothing new to test or verify. Continuing would
         only spend LLM calls on an outcome that is already known.
+
+        "Changed no file" is judged from the workspace on disk, not only from the
+        Coder's report: a Coder whose final answer was invalid may still have
+        written files, and those are worth testing and debugging.
         """
         from backend.agents.contracts import AgentStatus
         if result is None or getattr(result, "status", None) != AgentStatus.failed:
             return None
         if agent == "Planner":
             reason = "Planner failed, so there is no plan to implement"
-        elif agent == "Coder" and not getattr(result, "files_changed", None):
+        elif agent == "Coder" and not getattr(result, "files_changed", None) and not self._changed_on_disk():
             reason = "Coder failed without changing any file, so there is nothing to test or verify"
         else:
             return None
@@ -156,6 +160,10 @@ class RunHandle:
         self.coordinate("stop", actor, agent, reason, stage=agent)
         self.result.errors.append(f"Stopped: {reason}" + (f" ({errors})" if errors else ""))
         return reason
+
+    def _changed_on_disk(self) -> list[str]:
+        actual = getattr(type(self.runtime), "_actual_changes", None)
+        return actual(self.ctx) if actual else []
 
     @property
     def debug_budget_left(self) -> int:
