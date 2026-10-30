@@ -8,12 +8,15 @@ Registers all routers and configures middleware.
 from __future__ import annotations
 
 import hmac
+import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncIterator
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from backend.api.agent_runs import router as agent_runs_router
 from backend.api.experiments import router as experiments_router
@@ -79,8 +82,9 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",
     )
 
-    # Optional shared-secret auth. /health, CORS preflights and the sandboxed
-    # preview (loaded by an iframe that cannot send headers) are exempt.
+    # Optional shared-secret auth. /health, CORS preflights, the sandboxed
+    # preview (loaded by an iframe that cannot send headers) and the dashboard's
+    # own static files are exempt.
     @app.middleware("http")
     async def _require_token(request: Request, call_next):
         token = settings.api_token
@@ -90,6 +94,8 @@ def create_app() -> FastAPI:
             and request.method != "OPTIONS"
             and path != "/health"
             and "/serve/" not in path
+            and not (request.method == "GET" and (path in ("/", "/favicon.svg", "/icons.svg")
+                                                  or path.startswith("/assets/")))
         ):
             supplied = request.headers.get("authorization", "")
             if not supplied and path.endswith("/stream"):  # EventSource cannot send headers
@@ -112,6 +118,12 @@ def create_app() -> FastAPI:
     app.include_router(workspaces_router)
     app.include_router(agent_runs_router)
     app.include_router(experiments_router)
+
+    # Single-service deployments (e.g. Render): serve the built dashboard from the same origin.
+    # Mounted last, so every API route above takes precedence.
+    dist = Path(os.environ.get("VEXA_FRONTEND_DIST", Path(__file__).resolve().parents[1] / "frontend" / "dist"))
+    if (dist / "index.html").is_file():
+        app.mount("/", StaticFiles(directory=dist, html=True), name="dashboard")
 
     return app
 

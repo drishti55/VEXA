@@ -384,6 +384,24 @@ class TestStageFailureStops:
         assert any(e.startswith("Stopped: Coder failed without changing any file") for e in r.errors)
         assert r.status == AgentStatus.failed
 
+    @pytest.mark.parametrize("arch", ["sequential", "event_driven", "blackboard"])
+    def test_failed_coder_that_wrote_files_is_still_tested(self, tmp_path, arch):
+        # The Coder's final answer is invalid, but it did write a file: the run goes on to the Tester.
+        svc, ws = _ws(tmp_path)
+        repo = svc._manager.require(ws)
+
+        def on_call(agent_id, _n):
+            if agent_id == "Coder":
+                (repo / "index.html").write_text("<html></html>\n")
+                raise RuntimeError("Agent output failed schema validation after 2 retries")
+
+        crew = SoftwareEngineeringCrew(tool_service=svc, settings=_make_settings(3),
+                                       responder=ScriptedResponder(dict(HAPPY_SCRIPTS), on_call))
+        r = crew.run_task(ws, "Add modulo", architecture=arch)
+        assert "Tester" in _dispatched(r) and "Verifier" in _dispatched(r)
+        assert not any(e.startswith("Stopped: Coder failed") for e in r.errors)
+        assert "index.html" in r.files_changed
+
     def test_event_driven_publishes_execution_failed(self, tmp_path):
         r = _run_failing(tmp_path, "event_driven", "Planner")
         events = [c["detail"] for c in r.coordination_log if c["kind"] == "event"]

@@ -49,8 +49,9 @@ function App() {
   const [architectures, setArchitectures] = useState<Option[]>([]);
   const [promptVariants, setPromptVariants] = useState<Option[]>([]);
   const [connected, setConnected] = useState<boolean | null>(null);
-  const [verifierBackend, setVerifierBackend] = useState('adk_a2a');
-  const [toolTransport, setToolTransport] = useState('mcp');
+  // Build-time defaults: small hosts (e.g. Render Free) build with 'crewai' + 'direct' to avoid extra processes.
+  const [verifierBackend, setVerifierBackend] = useState(import.meta.env.VITE_DEFAULT_VERIFIER || 'adk_a2a');
+  const [toolTransport, setToolTransport] = useState(import.meta.env.VITE_DEFAULT_TOOL_TRANSPORT || 'mcp');
   const [modelTest, setModelTest] = useState<string | null>(null);
   const [recentRuns, setRecentRuns] = useState<AgentRunResponse[]>([]);
 
@@ -68,11 +69,7 @@ function App() {
     VexaApi.getArchitectures().then(setArchitectures).catch(console.error);
     VexaApi.getPromptVariants().then(setPromptVariants).catch(console.error);
     VexaApi.listAgentRuns().then(r => setRecentRuns(r.runs)).catch(console.error);
-    // Re-open the last viewed run after a page refresh (persisted on the server)
-    let last: string | null = null;
-    try { last = localStorage.getItem('vexa:lastRun'); } catch { /* storage unavailable */ }
-    if (last) openRun(last, false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Past runs stay in the registry and are listed under "Open a previous run"; none is opened on load.
   }, []);
 
   function openRun(runId: string, switchPage = true) {
@@ -80,7 +77,6 @@ function App() {
       setRunState(run);
       if (run.status === 'running') setActiveRunId(run.run_id);
       if (switchPage) { setPage('run'); setRightTab('observability'); }
-      try { localStorage.setItem('vexa:lastRun', runId); } catch { /* ignore */ }
     }).catch(err => { if (switchPage) alert(`Could not open run: ${err.message}`); });
   }
 
@@ -146,7 +142,6 @@ function App() {
         llm_fallback_api_key: fallbackApiKey || undefined,
       });
       setActiveRunId(res.run_id);
-      try { localStorage.setItem('vexa:lastRun', res.run_id); } catch { /* ignore */ }
     } catch (err: any) {
       if (err instanceof ApiError && err.status === 409 && err.detail?.needs_confirmation) {
         // G1 flagged an ambiguous requirement: a human decides, and the decision is recorded on the run.

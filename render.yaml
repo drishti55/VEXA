@@ -1,0 +1,44 @@
+# Render Blueprint: one web service that serves the API and the dashboard.
+# New -> Blueprint -> pick this repository. Render asks for the values marked sync: false.
+#
+# Free plan limits: 512 MB RAM, sleeps after 15 min idle (first request then takes ~1 min),
+# and the filesystem is wiped on every restart/deploy (saved runs and workspaces are lost).
+# To keep data, use a paid plan and add a disk mounted at /data.
+services:
+  - type: web
+    name: vexa
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # --- secrets: entered in the Render dashboard, never committed ---
+      - key: GROQ_API_KEY
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      # --- model ---
+      - key: VEXA_LLM_PROVIDER
+        value: groq
+      - key: VEXA_LLM_MODEL
+        value: groq/openai/gpt-oss-120b
+      - key: VEXA_LLM_FALLBACK_PROVIDER
+        value: groq
+      - key: VEXA_LLM_FALLBACK_MODEL
+        value: groq/openai/gpt-oss-20b
+      # Stop any single run after this many tokens (protects the Groq quota on a public URL)
+      - key: VEXA_MAX_RUN_TOKENS
+        value: "120000"
+      # --- fit the 512 MB Free plan: no MCP subprocesses, in-process verifier ---
+      - key: VEXA_TOOL_TRANSPORT
+        value: direct
+      - key: VEXA_VERIFIER_BACKEND
+        value: crewai
+      # Dashboard defaults, read as Docker build args when the image is built
+      - key: VITE_DEFAULT_TOOL_TRANSPORT
+        value: direct
+      - key: VITE_DEFAULT_VERIFIER
+        value: crewai
+      - key: LOG_LEVEL
+        value: INFO
