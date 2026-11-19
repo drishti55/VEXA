@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Keyboard Tester</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>🎹 Keyboard Tester</h1>
+    <p class="sub">Press keys to check they register. Pressed keys turn green.</p>
+<div class="card center"><p class="big" id="key" style="font-size:44px">Press a key</p><p class="muted" id="detail">key · code · keyCode</p></div>
+<div class="card" id="kb" style="overflow-x:auto"></div>
+<div class="card"><div class="row"><b class="grow" id="tested">0 keys tested</b><button class="ghost small" id="reset">Reset</button></div></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

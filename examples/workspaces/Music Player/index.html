@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Music Player</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>🎵 Music Player</h1>
+    <p class="sub">Play your own audio files, or try the built-in demo tunes.</p>
+<div class="card center"><p class="big" id="title" style="font-size:22px;min-height:33px">No track</p><p class="muted" id="meta"></p>
+<input id="seek" type="range" min="0" max="100" value="0" step="0.1" style="width:100%"><div class="row"><span class="muted" id="cur">0:00</span><span class="grow"></span><span class="muted" id="dur">0:00</span></div>
+<div class="row" style="justify-content:center;margin-top:8px"><button class="ghost" id="shuffle" title="Shuffle">🔀</button><button class="ghost" id="prev">⏮</button><button id="play" style="min-width:70px">▶</button><button class="ghost" id="next">⏭</button><button class="ghost" id="repeat" title="Repeat all">🔁</button></div>
+<div class="row" style="justify-content:center;margin-top:8px"><span>🔈</span><input id="vol" type="range" min="0" max="1" step="0.01" value="0.8"></div></div>
+<div class="card"><div class="row"><b class="grow">Playlist</b><label style="cursor:pointer"><input id="files" type="file" accept="audio/*" multiple hidden><span class="pill">+ Add audio files</span></label></div><ul id="list" class="list"></ul></div>
+<audio id="audio"></audio>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Random Number Generator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>🎰 Random Number Generator</h1>
+    <p class="sub">Random whole numbers in any range, with or without repeats.</p>
+<div class="card"><div class="row"><label>Min</label><input id="min" type="number" value="1" style="width:100px"><label>Max</label><input id="max" type="number" value="100" style="width:100px"><label>Count</label><input id="count" type="number" min="1" max="1000" value="1" style="width:80px"></div>
+<div class="row" style="margin-top:8px"><label><input type="checkbox" id="unique"> no repeats</label><label><input type="checkbox" id="sort"> sort</label><span class="grow"></span><button id="go">Generate</button></div></div>
+<div class="card center"><p class="big" id="out" style="word-break:break-word;font-size:30px">–</p><p class="muted" id="info"></p><button class="ghost small" id="copy">Copy</button></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

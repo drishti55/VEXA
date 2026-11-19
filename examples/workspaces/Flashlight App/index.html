@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flashlight App</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>🔦 Flashlight App</h1>
+    <p class="sub">Turn your screen into a light — choose a color, brightness or SOS.</p>
+<div class="card"><div class="row"><button id="on" class="grow">Turn on</button><input id="color" type="color" value="#ffffff" style="width:56px;height:38px;padding:2px"></div>
+<div class="row" style="margin-top:10px"><label>Brightness</label><input id="bright" type="range" min="10" max="100" value="100" class="grow"></div>
+<div class="row" style="margin-top:10px"><label>Mode</label><select id="mode"><option value="steady">Steady</option><option value="strobe">Strobe</option><option value="sos">SOS (… — — — …)</option></select></div>
+<p class="muted" style="font-size:12.5px">Click or press Esc to turn the light off. For the brightest light, maximise your screen brightness.</p></div>
+<div id="light" hidden style="position:fixed;inset:0;z-index:10;cursor:pointer"></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

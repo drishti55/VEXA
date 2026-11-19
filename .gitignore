@@ -53,7 +53,7 @@ experiments/outputs/
 benchmarks/results/
 
 # VEXA workspaces
-workspaces/
+/workspaces/
 
 # Frontend
 frontend/node_modules/

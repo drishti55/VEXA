@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Random Name Picker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>🎯 Random Name Picker</h1>
+    <p class="sub">Paste a list of names and draw a winner.</p>
+<div class="card"><textarea id="names" rows="6" placeholder="One name per line"></textarea>
+<div class="row" style="margin-top:8px"><button id="pick" class="grow">Pick a name</button><label><input type="checkbox" id="remove" checked> remove after picking</label></div></div>
+<div class="card center"><p class="big" id="winner" style="min-height:58px">—</p><p class="muted" id="left"></p></div>
+<div class="card"><div class="row"><b class="grow">Picked</b><button class="ghost small" id="reset">Put everyone back</button></div><ol id="picked"></ol></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

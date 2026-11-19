@@ -1,0 +1,17 @@
+/* Basic reset */
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:Arial,Helvetica,sans-serif;background:#f5f5f5;color:#333;line-height:1.6;}
+.quiz-container{max-width:800px;margin:2rem auto;background:#fff;padding:1.5rem;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+.question-area{margin-bottom:1.5rem;}
+.question-text{font-size:1.25rem;margin-bottom:1rem;}
+.option-wrapper{margin-bottom:0.75rem;display:flex;align-items:center;}
+.option-label{margin-left:0.5rem;cursor:pointer;}
+.nav-btn,.restart-btn{background:#0066cc;color:#fff;border:none;padding:0.75rem 1.5rem;border-radius:4px;font-size:1rem;cursor:pointer;margin-right:0.5rem;}
+.nav-btn:disabled{background:#999;cursor:not-allowed;}
+.nav-btn:focus,.restart-btn:focus{outline:3px solid #ffbf47;outline-offset:2px;}
+.result-area{margin-top:1.5rem;font-size:1.1rem;}
+.error{color:#d00;}
+@media (max-width:600px){
+  .quiz-container{padding:1rem;}
+  .nav-btn,.restart-btn{width:100%;margin-bottom:0.5rem;}
+}

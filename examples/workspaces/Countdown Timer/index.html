@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Countdown Timer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>⏳ Countdown Timer</h1>
+    <p class="sub">Count down a duration or to a date, with an alarm at zero.</p>
+<div class="card"><div class="row"><select id="mode"><option value="dur">Duration</option><option value="date">Until a date</option></select>
+<span id="durIn" class="row"><input id="h" type="number" min="0" value="0" style="width:64px">h<input id="m" type="number" min="0" max="59" value="5" style="width:64px">m<input id="s" type="number" min="0" max="59" value="0" style="width:64px">s</span>
+<input id="until" type="datetime-local" hidden></div>
+<div class="row" style="margin-top:8px"><button id="presets1" class="ghost small" data-sec="60">1 min</button><button class="ghost small" data-sec="300">5 min</button><button class="ghost small" data-sec="600">10 min</button><button class="ghost small" data-sec="1800">30 min</button></div></div>
+<div class="card center"><p class="big" id="display" style="font-size:64px;font-variant-numeric:tabular-nums">05:00</p><div class="bar"><div id="bar"></div></div>
+<div class="row" style="justify-content:center;margin-top:12px"><button id="start">Start</button><button class="ghost" id="pause" disabled>Pause</button><button class="ghost" id="reset">Reset</button></div></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

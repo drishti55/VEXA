@@ -31,6 +31,7 @@ WORKDIR /app
 COPY pyproject.toml ./
 COPY backend/ ./backend/
 COPY benchmarks/ ./benchmarks/
+COPY examples/ ./examples/
 RUN pip install --no-cache-dir ".[dev]"
 COPY --from=frontend /frontend/dist ./frontend/dist
 

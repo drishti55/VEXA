@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense Splitter</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>💸 Expense Splitter</h1>
+    <p class="sub">Add who paid for what and see who owes whom.</p>
+<div class="card"><div class="row"><input id="person" class="grow" placeholder="Person"><button id="addp">Add person</button></div><div id="people" class="row" style="margin-top:8px"></div></div>
+<div class="card"><div class="row"><input id="desc" class="grow" placeholder="What for?"><input id="amount" type="number" min="0" step="0.01" placeholder="Amount" style="width:110px"><select id="payer"></select><button id="adde">Add</button></div>
+<ul id="expenses" class="list"></ul></div>
+<div class="card"><b>Settle up</b><ul id="settle" class="list"></ul></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

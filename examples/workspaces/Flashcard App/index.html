@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flashcard App</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>🃏 Flashcard App</h1>
+    <p class="sub">Make flashcards, flip them, and track which you know.</p>
+<div class="card"><div class="row"><input id="front" class="grow" placeholder="Front (question)"><input id="back" class="grow" placeholder="Back (answer)"><button id="add">Add card</button></div></div>
+<div class="card center"><div id="card" style="min-height:160px;display:grid;place-items:center;font-size:22px;border:1px dashed var(--line);border-radius:10px;cursor:pointer;padding:16px;user-select:none" title="Click to flip"></div>
+<p class="muted" id="pos"></p>
+<div class="row" style="justify-content:center"><button class="ghost" id="prev">◀ Prev</button><button class="ghost" id="flip">Flip</button><button class="ghost" id="next">Next ▶</button></div>
+<div class="row" style="justify-content:center;margin-top:8px"><button id="known">I knew it</button><button class="ghost" id="shuffle">Shuffle</button><label><input type="checkbox" id="hide"> hide known</label><button class="ghost small" id="del">Delete card</button></div></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

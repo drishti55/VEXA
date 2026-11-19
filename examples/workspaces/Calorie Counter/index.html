@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calorie Counter</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>🍎 Calorie Counter</h1>
+    <p class="sub">Log what you eat today against a daily goal.</p>
+<div class="card"><div class="row"><label>Daily goal</label><input id="goal" type="number" min="500" step="50" style="width:110px"> kcal</div>
+<p class="big center" id="total">0</p><div class="bar"><div id="bar"></div></div><p class="center muted" id="left"></p></div>
+<div class="card"><div class="row"><input id="food" class="grow" placeholder="Food"><input id="kcal" type="number" min="1" placeholder="kcal" style="width:100px"><button id="add">Add</button></div>
+<ul id="list" class="list"></ul><div class="row" style="margin-top:8px"><span class="grow"></span><button class="ghost small" id="reset">Clear today</button></div></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

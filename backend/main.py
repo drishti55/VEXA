@@ -60,6 +60,8 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
         orphans = cleanup_orphan_workspaces(ToolService())
         if orphans:
             logger.warning("orphan_benchmark_workspaces_removed | ids=%s", orphans)
+        from backend.examples import seed_example_workspaces
+        seed_example_workspaces(ToolService())  # empty disk (fresh deploy) -> starter workspaces
     except Exception as exc:
         logger.error("registry_startup_check_failed | %s", exc)
     logger.info(

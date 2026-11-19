@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Color Picker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>🖌️ Color Picker</h1>
+    <p class="sub">Pick a color, read it as HEX / RGB / HSL and build a palette.</p>
+<div class="card"><div class="row"><input id="picker" type="color" value="#6ea8fe" style="width:70px;height:70px;padding:2px"><div class="grow" id="swatch" style="height:70px;border-radius:8px"></div></div>
+<div id="sliders" style="margin-top:10px"></div></div>
+<div class="card"><div id="formats"></div><button id="savec" style="margin-top:8px">Save to palette</button></div>
+<div class="card"><div class="row"><b class="grow">Palette</b><button class="ghost small" id="clearp">Clear</button></div><div id="palette" class="row" style="margin-top:8px"></div></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

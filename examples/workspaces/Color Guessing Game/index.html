@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Color Guessing Game</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>🎨 Color Guessing Game</h1>
+    <p class="sub">Which swatch matches the RGB value?</p>
+<div class="card center"><p class="big" id="target" style="font-size:28px"></p><div id="swatches" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
+<p id="msg" style="min-height:24px;margin-top:12px"></p>
+<div class="row" style="justify-content:center"><button id="new">New colors</button><select id="mode"><option value="3">Easy (3)</option><option value="6" selected>Hard (6)</option></select></div></div>
+<div class="card stats"><div class="stat"><b id="score">0</b>score</div><div class="stat"><b id="streak">0</b>streak</div><div class="stat"><b id="best">0</b>best streak</div></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

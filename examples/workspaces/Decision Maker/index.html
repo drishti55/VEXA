@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Decision Maker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>🤔 Decision Maker</h1>
+    <p class="sub">Can't decide? Add your options and let chance pick.</p>
+<div class="card"><textarea id="opts" rows="5" placeholder="One option per line&#10;Pizza&#10;Sushi&#10;Tacos"></textarea>
+<div class="row" style="margin-top:8px"><button id="decide" class="grow">Decide for me</button><button class="ghost" id="yesno">Yes / No</button></div></div>
+<div class="card center"><p class="big" id="answer" style="min-height:58px">?</p></div>
+<div class="card"><b>Past decisions</b><ul id="history" class="list"></ul></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

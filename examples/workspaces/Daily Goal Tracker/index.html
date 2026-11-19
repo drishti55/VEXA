@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Goal Tracker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>🎯 Daily Goal Tracker</h1>
+    <p class="sub">Set goals, tick them off each day and keep your streak.</p>
+<div class="card"><div class="row"><input id="goal" class="grow" placeholder="New goal, e.g. Read 20 pages"><button id="add">Add goal</button></div></div>
+<div class="card"><div class="row"><b class="grow" id="date"></b><span id="pct" class="pill"></span></div><div class="bar" style="margin:10px 0"><div id="bar"></div></div>
+<ul id="list" class="list"></ul></div>
+<div class="card stats"><div class="stat"><b id="streak">0</b>day streak</div><div class="stat"><b id="best">0</b>best streak</div><div class="stat"><b id="perfect">0</b>perfect days</div></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+/*
+ * styles.css
+ * Basic styling for Rock Paper Scissors game
+ */
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f0f4f8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.game-container {
+    text-align: center;
+    background: #fff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    max-width: 400px;
+    width: 90%;
+}
+
+.buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.choice-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background: #4caf50;
+    color: #fff;
+    transition: background 0.3s;
+}
+.choice-btn:hover {
+    background: #45a049;
+}
+
+.result {
+    font-size: 1.2rem;
+    margin: 1rem 0;
+    min-height: 1.5rem;
+}
+
+.scores p {
+    margin: 0.5rem 0;
+    font-size: 1rem;
+}
+
+.reset-btn {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background: #f44336;
+    color: #fff;
+    transition: background 0.3s;
+}
+.reset-btn:hover {
+    background: #d32f2f;
+}
+
+@media (max-width: 480px) {
+    .choice-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+    .reset-btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+    }
+}

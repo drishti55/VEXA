@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text Formatter</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>📝 Text Formatter</h1>
+    <p class="sub">Clean up and transform text in one click.</p>
+<div class="card"><textarea id="text" rows="10" placeholder="Paste or type text here…"></textarea>
+<p class="muted" id="counts" style="margin:6px 0 0"></p></div>
+<div class="card"><div class="row" id="actions"></div><div class="row" style="margin-top:10px"><button class="ghost" id="undo">Undo</button><span class="grow"></span><button id="copy">Copy</button></div></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

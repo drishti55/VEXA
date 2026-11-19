@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopping List App</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>🛒 Shopping List App</h1>
+    <p class="sub">Group items by aisle, tick them off as you shop.</p>
+<div class="card"><div class="row"><input id="item" class="grow" placeholder="Item"><input id="qty" type="number" min="1" value="1" style="width:70px">
+<select id="cat"><option>Produce</option><option>Dairy</option><option>Bakery</option><option>Meat</option><option>Pantry</option><option>Frozen</option><option>Household</option><option>Other</option></select><button id="add">Add</button></div></div>
+<div class="card"><div class="row"><b class="grow" id="count"></b><button class="small ghost" id="clear">Remove bought</button></div><div id="groups"></div></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Water Intake Tracker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>💧 Water Intake Tracker</h1>
+    <p class="sub">Hit your daily water goal one glass at a time.</p>
+<div class="card center"><div id="glass" style="width:120px;height:170px;margin:0 auto;border:3px solid var(--accent);border-top:0;border-radius:0 0 18px 18px;position:relative;overflow:hidden">
+<div id="fill" style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(#6ea8fe,#3d7bea);height:0;transition:height .4s"></div></div>
+<p class="big" id="amount">0 ml</p><p class="muted" id="left"></p>
+<div class="row" style="justify-content:center"><button data-ml="250">+250 ml</button><button data-ml="500">+500 ml</button><input id="custom" type="number" min="1" placeholder="ml" style="width:90px"><button id="addc" class="ghost">Add</button><button id="undo" class="ghost">Undo</button></div></div>
+<div class="card"><div class="row"><label>Daily goal (ml)</label><input id="goal" type="number" min="250" step="250" style="width:110px"></div><ul id="log" class="list" style="margin-top:8px"></ul></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

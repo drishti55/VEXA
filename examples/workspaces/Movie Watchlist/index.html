@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movie Watchlist</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>🎬 Movie Watchlist</h1>
+    <p class="sub">Keep a list of movies to watch, mark them watched and rate them.</p>
+<div class="card"><div class="row"><input id="title" class="grow" placeholder="Movie title"><input id="year" type="number" min="1888" max="2100" placeholder="Year" style="width:90px">
+<select id="genre"><option>Drama</option><option>Comedy</option><option>Action</option><option>Sci-Fi</option><option>Horror</option><option>Animation</option><option>Documentary</option><option>Other</option></select><button id="add">Add</button></div></div>
+<div class="card"><div class="row"><select id="filter"><option value="all">All</option><option value="todo">To watch</option><option value="done">Watched</option></select><input id="q" class="grow" placeholder="Search"><span id="count" class="muted"></span></div>
+<ul id="list" class="list"></ul></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

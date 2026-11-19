@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Strength Checker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>🔐 Password Strength Checker</h1>
+    <p class="sub">Checks length, variety and common patterns. Nothing leaves your browser.</p>
+<div class="card"><div class="row"><input id="pw" class="grow" type="password" placeholder="Type a password" autocomplete="off"><button class="ghost" id="toggle">Show</button></div>
+<div class="bar" style="margin-top:12px"><div id="bar"></div></div><p><b id="label">–</b> <span class="muted" id="entropy"></span></p><ul id="checks" class="list"></ul></div>
+<div class="card"><b>Tips</b><ul id="tips" class="muted" style="margin:6px 0 0;padding-left:18px"></ul></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

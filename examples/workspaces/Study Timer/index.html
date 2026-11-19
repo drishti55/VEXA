@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Timer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>📚 Study Timer</h1>
+    <p class="sub">Pomodoro: focus 25 minutes, then take a short break.</p>
+<div class="card"><div class="row"><input id="task" class="grow" placeholder="What are you working on?">
+<label>Focus</label><input id="focus" type="number" min="1" value="25" style="width:64px"><label>Break</label><input id="short" type="number" min="1" value="5" style="width:64px"><label>Long</label><input id="long" type="number" min="1" value="15" style="width:64px"></div></div>
+<div class="card center"><span class="pill" id="phase">Focus</span><p class="big" id="display" style="font-size:72px;font-variant-numeric:tabular-nums;margin:10px 0">25:00</p>
+<div class="row" style="justify-content:center"><button id="start">Start</button><button class="ghost" id="skip">Skip</button><button class="ghost" id="reset">Reset</button></div><p class="muted" id="cycle"></p></div>
+<div class="card"><b>Today's sessions</b> <span id="mins" class="muted"></span><ul id="log" class="list"></ul></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

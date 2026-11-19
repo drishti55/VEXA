@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Random Emoji Generator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>😜 Random Emoji Generator</h1>
+    <p class="sub">Generate random emoji by category. Click one to copy it.</p>
+<div class="card"><div class="row"><select id="cat"></select><label>How many</label><input id="n" type="number" min="1" max="50" value="10" style="width:70px"><button id="go">Generate</button></div></div>
+<div class="card"><div id="out" class="row" style="font-size:38px;gap:12px;min-height:60px"></div><p class="muted" id="hint"></p>
+<button class="ghost small" id="copyall">Copy all</button></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

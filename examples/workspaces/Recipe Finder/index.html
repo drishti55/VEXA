@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recipe Finder</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>🍳 Recipe Finder</h1>
+    <p class="sub">Find recipes by name or by what's in your fridge.</p>
+<div class="card"><input id="q" placeholder="Search recipes, e.g. pasta" style="width:100%"><input id="have" placeholder="Ingredients you have, comma separated (e.g. egg, tomato, cheese)" style="width:100%;margin-top:8px">
+<div class="row" style="margin-top:8px"><select id="diet"><option value="">Any diet</option><option>vegetarian</option><option>vegan</option><option>gluten-free</option></select><select id="time"><option value="999">Any time</option><option value="15">≤ 15 min</option><option value="30">≤ 30 min</option><option value="60">≤ 60 min</option></select><span class="grow"></span><span id="count" class="muted"></span></div></div>
+<div id="results"></div>
+<dialog id="dlg" style="background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:10px;max-width:520px;width:calc(100% - 32px)"></dialog>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

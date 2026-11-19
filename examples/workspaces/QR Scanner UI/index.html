@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Scanner UI</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>📷 QR Scanner UI</h1>
+    <p class="sub">Scan a QR code with your camera or from an image file.</p>
+<div class="card"><div class="row"><button id="cam">Start camera</button><button class="ghost" id="stop" disabled>Stop</button><label class="ghost" style="cursor:pointer">or <input id="file" type="file" accept="image/*"></label></div>
+<p class="muted" id="support" style="font-size:12.5px"></p>
+<div style="position:relative;margin-top:10px;background:#000;border-radius:10px;overflow:hidden;aspect-ratio:4/3">
+<video id="video" playsinline muted style="width:100%;height:100%;object-fit:cover"></video>
+<div style="position:absolute;inset:18%;border:3px solid var(--accent);border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.35)"></div>
+<p id="status" style="position:absolute;bottom:6px;left:0;right:0;text-align:center;margin:0;color:#fff;font-size:13px">Camera off</p></div></div>
+<div class="card"><b>Result</b><p id="result" style="word-break:break-all;min-height:24px">—</p><div class="row"><button class="ghost small" id="copy">Copy</button><a id="open" target="_blank" rel="noopener" hidden><button class="ghost small">Open link</button></a></div></div>
+<div class="card"><b>History</b><ul id="history" class="list"></ul></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

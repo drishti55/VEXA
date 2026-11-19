@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mood Tracker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <h1>😊 Mood Tracker</h1>
+    <p class="sub">Record how you feel each day and spot patterns.</p>
+<div class="card center"><p class="muted" style="margin-top:0">How are you feeling today?</p><div id="moods" class="row" style="justify-content:center"></div>
+<input id="note" placeholder="Optional note" style="width:100%;margin-top:10px"><button id="save" style="margin-top:10px">Save today</button></div>
+<div class="card"><b>Last 30 days</b><div id="counts" class="stats" style="margin-top:8px"></div></div>
+<div class="card"><b>History</b><ul id="history" class="list"></ul></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
