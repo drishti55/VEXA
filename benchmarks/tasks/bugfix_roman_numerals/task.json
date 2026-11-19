@@ -1,0 +1,14 @@
+{
+  "id": "bugfix_roman_numerals",
+  "title": "Roman numerals: subtractive notation",
+  "category": "bug_fix",
+  "difficulty": "medium",
+  "requirement": "roman.to_roman(n) writes 4 as 'IIII' and 9 as 'VIIII'. Use standard subtractive notation\n(IV, IX, XL, XC, CD, CM) for 1 <= n <= 3999, and raise ValueError outside that range.",
+  "acceptance_criteria": [
+    "to_roman(4) == 'IV'",
+    "to_roman(1994) == 'MCMXCIV'",
+    "to_roman(0) raises ValueError"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

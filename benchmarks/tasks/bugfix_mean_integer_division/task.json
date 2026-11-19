@@ -1,0 +1,14 @@
+{
+  "id": "bugfix_mean_integer_division",
+  "title": "Fix mean() rounding and empty input",
+  "category": "bug_fix",
+  "difficulty": "easy",
+  "requirement": "stats.mean(xs) truncates its result (mean([2, 3]) returns 2) and crashes with ZeroDivisionError on an\nempty list. It must return the exact float mean, and raise ValueError(\"mean of empty sequence\") for an empty list.",
+  "acceptance_criteria": [
+    "mean([2, 3]) == 2.5",
+    "mean([1, 2, 3]) == 2",
+    "mean([]) raises ValueError"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

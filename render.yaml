@@ -30,15 +30,16 @@ services:
       # Stop any single run after this many tokens (protects the Groq quota on a public URL)
       - key: VEXA_MAX_RUN_TOKENS
         value: "120000"
-      # --- fit the 512 MB Free plan: no MCP subprocesses, in-process verifier ---
+      # --- fit the 512 MB Free plan: no MCP subprocesses; the Google ADK Verifier runs
+      # embedded (A2A over localhost), so both CrewAI and ADK are used (~255 MB measured) ---
       - key: VEXA_TOOL_TRANSPORT
         value: direct
       - key: VEXA_VERIFIER_BACKEND
-        value: crewai
+        value: adk_a2a
       # Dashboard defaults, read as Docker build args when the image is built
       - key: VITE_DEFAULT_TOOL_TRANSPORT
         value: direct
       - key: VITE_DEFAULT_VERIFIER
-        value: crewai
+        value: adk_a2a
       - key: LOG_LEVEL
         value: INFO

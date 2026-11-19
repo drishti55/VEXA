@@ -366,6 +366,49 @@ export interface SubmitRunOptions {
   task_category?: string;
 }
 
+export interface FileEntry {
+  path: string;
+  size_bytes: number;
+  is_dir: boolean;
+}
+
+export interface SearchMatch {
+  file: string;
+  line_number: number;
+  matched_line: string;
+}
+
+// ToolResult of a sandboxed command (backend/tools/models.py)
+export interface CommandResult {
+  success: boolean;
+  message: string;
+  error?: string | null;
+  exit_code?: number | null;
+  stdout?: string;
+  stderr?: string;
+  timed_out?: boolean;
+  duration_ms?: number;
+  data?: any;
+}
+
+export interface SystemStatus {
+  checked_at: string;
+  backend: { status: string; version: string; environment: string };
+  database: { status: string; dialect?: string; runs?: number; experiments?: number; error?: string };
+  llm: { status: string; model?: string; provider?: string; key_source?: string | null; reachability?: string; error?: string };
+  a2a: { status: string; url?: string; note?: string };
+  mcp: { status: string; lifecycle: string; servers: { name: string; configured: boolean }[] };
+  sandbox: { backend: string };
+  sse: { status: string; endpoint: string };
+  active_runs: string[];
+  active_experiments: string[];
+}
+
+/** GET a JSON endpoint (used by VEXA Studio's inspection views; shapes are typed at the call site). */
+export async function apiGet<T = any>(path: string, what = 'Request'): Promise<T> {
+  return json<T>(await apiFetch(path), what);
+}
+
 export const VexaApi = {
   getWorkspaces: async (): Promise<{ workspaces: Workspace[] }> => {
     const data = await json<string[]>(await apiFetch(`/workspaces`), 'Listing workspaces');
@@ -473,6 +516,53 @@ export const VexaApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ path }),
     }), 'Reading file'),
+
+  writeFile: async (workspace_id: string, path: string, content: string): Promise<any> =>
+    json(await apiFetch(`/workspaces/${encodeURIComponent(workspace_id)}/write`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path, content }),
+    }), 'Saving file'),
+
+  deleteFile: async (workspace_id: string, path: string): Promise<any> =>
+    json(await apiFetch(`/workspaces/${encodeURIComponent(workspace_id)}/files`, {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path }),
+    }), 'Deleting file'),
+
+  deleteDir: async (workspace_id: string, path: string): Promise<{ files_removed: number }> =>
+    json(await apiFetch(`/workspaces/${encodeURIComponent(workspace_id)}/dirs`, {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path }),
+    }), 'Deleting folder'),
+
+  mkdir: async (workspace_id: string, path: string): Promise<any> =>
+    json(await apiFetch(`/workspaces/${encodeURIComponent(workspace_id)}/mkdir`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path }),
+    }), 'Creating folder'),
+
+  rename: async (workspace_id: string, src: string, dst: string): Promise<any> =>
+    json(await apiFetch(`/workspaces/${encodeURIComponent(workspace_id)}/rename`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ src, dst }),
+    }), 'Renaming'),
+
+  searchCode: async (workspace_id: string, query: string, case_sensitive: boolean, file_glob = '*'):
+    Promise<{ matches: SearchMatch[]; truncated: boolean }> => {
+    const body = await json<any>(await apiFetch(`/workspaces/${encodeURIComponent(workspace_id)}/search`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, case_sensitive, file_glob, context_lines: 0 }),
+    }), 'Searching');
+    return body.data ?? { matches: [], truncated: false };
+  },
+
+  gitStatus: async (workspace_id: string): Promise<{ is_git_repo: boolean; output?: string }> =>
+    (await json<any>(await apiFetch(`/workspaces/${encodeURIComponent(workspace_id)}/git/status`), 'Git status')).data ?? { is_git_repo: false },
+
+  gitLog: async (workspace_id: string, max_entries = 30): Promise<{ is_git_repo: boolean; output?: string }> =>
+    (await json<any>(await apiFetch(`/workspaces/${encodeURIComponent(workspace_id)}/git/log?max_entries=${max_entries}`), 'Git log')).data ?? { is_git_repo: false },
+
+  runTests: async (workspace_id: string, test_path = '.', extra_args: string[] = []): Promise<CommandResult> =>
+    json(await apiFetch(`/workspaces/${encodeURIComponent(workspace_id)}/tests`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ test_path, extra_args }),
+    }), 'Running tests'),
+
+  systemStatus: async (): Promise<SystemStatus> => json(await apiFetch(`/system/status`), 'System status'),
 
   listExperiments: async (): Promise<Experiment[]> => json(await apiFetch(`/experiments`), 'Listing experiments'),
 

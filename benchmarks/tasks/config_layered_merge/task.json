@@ -1,0 +1,14 @@
+{
+  "id": "config_layered_merge",
+  "title": "Deep-merge layered configuration",
+  "category": "configuration",
+  "difficulty": "medium",
+  "requirement": "config.merge_config(*layers) combines config dicts with {**a, **b}, so a nested section in a later layer\nreplaces the whole section. Deep-merge instead: nested dicts merge recursively, later layers win for\nnon-dict values, and none of the input dicts are modified.",
+  "acceptance_criteria": [
+    "nested keys from earlier layers survive",
+    "later scalar wins",
+    "inputs not mutated"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

@@ -28,7 +28,7 @@ function watch(page: Page) {
 }
 
 async function startRun(page: Page, ws: string, requirement: string, opts: { arch?: string; category?: string } = {}) {
-  await page.goto('/');
+  await page.goto('/?classic');
   await page.getByTestId('workspace-select').selectOption(ws);
   await page.getByTestId('requirement').fill(requirement);
   await page.getByTestId('execution-mode').selectOption('mock');
@@ -108,7 +108,7 @@ test('sequential vs hierarchical take different paths for the same bug-fix task'
 test('preview renders a web workspace in the sandboxed iframe', async ({ page, request }) => {
   const ws = (await (await request.post(`${API}/workspaces`, { data: {} })).json()).workspace_id as string;
   await request.post(`${API}/workspaces/${ws}/write`, { data: { path: 'index.html', content: '<h1 id="hello">Hello VEXA</h1>' } });
-  await page.goto('/');
+  await page.goto('/?classic');
   await page.getByTestId('workspace-select').selectOption(ws);
   await page.getByTestId('tab-preview').click();
   await expect(page.frameLocator('iframe[title="Web Preview"]').locator('#hello')).toHaveText('Hello VEXA');
@@ -129,7 +129,7 @@ test('G1 ambiguous requirement asks the human, then runs with the decision recor
 });
 
 test('model/provider configuration: real mode shows the model field and Test model reports the key status', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/?classic');
   await page.getByTestId('execution-mode').selectOption('real');
   await expect(page.getByTestId('llm-model')).toBeVisible();
   await page.getByTestId('nav-experiments').click();
@@ -141,7 +141,7 @@ test('model/provider configuration: real mode shows the model field and Test mod
 
 test('experiment: configure, run, retrieve results, compare, export, rerun with pinned prompts', async ({ page, request }) => {
   const problems = watch(page);
-  await page.goto('/');
+  await page.goto('/?classic');
   await page.getByTestId('nav-experiments').click();
   const name = `e2e-${Date.now()}`;
   await page.getByTestId('exp-name').fill(name);
@@ -191,7 +191,7 @@ test('experiment: configure, run, retrieve results, compare, export, rerun with 
 test('new workspace: + New opens a named form, invalid/duplicate names are refused, the new one is selected', async ({ page, request }) => {
   const problems = watch(page);
   const name = `My App ${Date.now()}`;
-  await page.goto('/');
+  await page.goto('/?classic');
   await page.getByTestId('new-workspace-toggle').click();
   const input = page.getByTestId('new-workspace-name');
   await expect(input).toBeVisible();

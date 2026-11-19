@@ -1,0 +1,15 @@
+{
+  "id": "security_token_compare",
+  "title": "Constant-time token check",
+  "category": "security",
+  "difficulty": "easy",
+  "requirement": "tokens.check_token(given, expected) compares with ==, which leaks timing and accepts two empty tokens.\nUse hmac.compare_digest, and return False when either token is None or empty.",
+  "acceptance_criteria": [
+    "check_token('abc', 'abc') is True",
+    "check_token('', '') is False",
+    "check_token(None, 'abc') is False",
+    "uses hmac.compare_digest"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

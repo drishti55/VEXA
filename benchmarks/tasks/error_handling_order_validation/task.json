@@ -1,0 +1,15 @@
+{
+  "id": "error_handling_order_validation",
+  "title": "Validate order inputs",
+  "category": "error_handling",
+  "difficulty": "easy",
+  "requirement": "orders.create_order(qty, unit_price) returns {'qty', 'unit_price', 'total'} without validating anything.\nRaise TypeError if qty is not an int (bool is not accepted), ValueError('qty must be positive') if qty < 1,\nand ValueError('unit_price must not be negative') if unit_price < 0.",
+  "acceptance_criteria": [
+    "create_order(2, 5.0)['total'] == 10.0",
+    "qty 0 -> ValueError",
+    "qty 1.5 / True -> TypeError",
+    "negative price -> ValueError"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

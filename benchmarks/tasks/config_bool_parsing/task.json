@@ -1,0 +1,15 @@
+{
+  "id": "config_bool_parsing",
+  "title": "Parse boolean settings correctly",
+  "category": "configuration",
+  "difficulty": "easy",
+  "requirement": "config.get_bool(env, key, default=False) uses bool(env.get(key)), so 'false' and '0' are True. Accept\n'1', 'true', 'yes', 'on' as True and '0', 'false', 'no', 'off' as False (case-insensitive, surrounding\nwhitespace ignored). A missing key returns default; any other value raises ValueError naming the key.",
+  "acceptance_criteria": [
+    "'false' -> False",
+    "' YES ' -> True",
+    "missing -> default",
+    "'maybe' -> ValueError"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

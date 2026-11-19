@@ -27,3 +27,4 @@ dist-ssr
 test-results/
 playwright-report/
 e2e-results.json
+node_modules.broken/

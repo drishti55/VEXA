@@ -1,0 +1,14 @@
+{
+  "id": "feature_word_frequencies",
+  "title": "Word frequency counter",
+  "category": "feature",
+  "difficulty": "easy",
+  "requirement": "textstats.py has char_count(text). Add word_frequencies(text) returning a dict of lowercase word -> count.\nWords are runs of letters, digits or apostrophes; punctuation is ignored.",
+  "acceptance_criteria": [
+    "word_frequencies('The cat. the CAT!') == {'the': 2, 'cat': 2}",
+    "word_frequencies('') == {}",
+    "apostrophes kept: \"don't\""
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

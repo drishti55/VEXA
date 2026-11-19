@@ -1,0 +1,14 @@
+{
+  "id": "feature_kelvin_conversion",
+  "title": "Add Kelvin to temperature conversion",
+  "category": "feature",
+  "difficulty": "easy",
+  "requirement": "temperature.convert(value, from_unit, to_unit) converts between 'C' and 'F'. Add 'K' (Kelvin) in both\ndirections. Results are rounded to 2 decimals. Unknown units still raise ValueError, and a Kelvin\ninput below 0 raises ValueError.",
+  "acceptance_criteria": [
+    "convert(0, 'C', 'K') == 273.15",
+    "convert(212, 'F', 'K') == 373.15",
+    "convert(-1, 'K', 'C') raises ValueError"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

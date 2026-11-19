@@ -7,7 +7,7 @@ test.skip(!RUN, 'set VEXA_LIVE_RUN_ID to a run produced with a real provider');
 test('a real CrewAI + ADK run is visualised from stored data', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
-  await page.goto('/');
+  await page.goto('/?classic');
   await page.getByTestId('recent-runs').selectOption(RUN!);
   await expect(page.getByTestId('run-status')).toHaveText(/SUCCESS|PARTIAL|FAILED/);
   await expect(page.getByTestId('run-status')).not.toContainText('MOCK');

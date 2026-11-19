@@ -55,6 +55,7 @@ class RunContext:
         self.workspace_id: str = workspace_id
         self.requirement: str = requirement
         self.architecture: str = architecture
+        self.probe: str | None = None  # "debugger" in debugger-probe evaluation runs
         self.execution_mode: str = "mock"
         self.provider: str | None = None
         self.model: str | None = None

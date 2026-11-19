@@ -188,6 +188,11 @@ class AgentSettings(BaseSettings):
         pattern="^(crewai|adk_a2a)$",
         description="'crewai' = in-process CrewAI Verifier; 'adk_a2a' = remote Google ADK Verifier over A2A.",
     )
+    verifier_fallback: bool = Field(
+        default=True,
+        description="If the ADK Verifier ends without a verdict (provider error, A2A failure), verify once more "
+                    "with the in-process CrewAI Verifier. The fallback is recorded on the run.",
+    )
     a2a_embedded: bool = Field(
         default=True,
         description="Start the ADK Verifier A2A server inside the backend process (real HTTP A2A on localhost). "

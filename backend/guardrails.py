@@ -147,6 +147,79 @@ def _scan(patterns: dict[str, re.Pattern[str]], text: str) -> list[Finding]:
 
 
 # ---------------------------------------------------------------------------
+# Normalisation for the heuristic guards (G1, G6)
+#
+# Patterns are matched against the raw text AND against de-obfuscated views of it,
+# so look-alike letters, invisible characters, spaced-out or leetspeak words and
+# base64-wrapped instructions are caught by the same rules. A finding from a
+# de-obfuscated view says which view matched.
+# ---------------------------------------------------------------------------
+
+_INVISIBLE = re.compile("[\u00ad\u034f\u061c\u115f\u1160\u17b4\u17b5\u180e\u200b-\u200f\u202a-\u202e"
+                        "\u2060-\u2064\u206a-\u206f\ufeff]")
+# Cyrillic / Greek letters that look like Latin ones (NFKC does not map these).
+_CONFUSABLES = str.maketrans({
+    "а": "a", "е": "e", "о": "o", "р": "p", "с": "c", "у": "y", "х": "x", "і": "i", "ј": "j", "ѕ": "s",
+    "ԁ": "d", "ɡ": "g", "һ": "h", "ӏ": "l", "ո": "n", "ԛ": "q", "ԝ": "w",
+    "А": "A", "В": "B", "Е": "E", "І": "I", "Ј": "J", "К": "K", "М": "M", "Н": "H", "О": "O", "Р": "P",
+    "С": "C", "Т": "T", "Х": "X", "У": "Y", "Ѕ": "S",
+    "ο": "o", "ι": "i", "α": "a", "ε": "e", "ν": "v", "τ": "t", "κ": "k", "ρ": "p", "υ": "u",
+    "Α": "A", "Β": "B", "Ε": "E", "Ι": "I", "Κ": "K", "Μ": "M", "Ν": "N", "Ο": "O", "Ρ": "P", "Τ": "T", "Χ": "X",
+})
+_LEET = str.maketrans({"0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "@": "a", "$": "s", "|": "l"})
+_SPACED = re.compile(r"(?<![A-Za-z])(?:[A-Za-z][ \t._*-]){2,}[A-Za-z](?![A-Za-z])")
+_B64_TOKEN = re.compile(r"[A-Za-z0-9+/_-]{20,}={0,2}")
+
+
+def normalise(text: str) -> str:
+    """NFKC, drop invisible characters, map look-alike letters, join spaced-out letters."""
+    import unicodedata
+    t = unicodedata.normalize("NFKC", text or "")
+    t = _INVISIBLE.sub("", t).translate(_CONFUSABLES)
+    return _SPACED.sub(lambda m: re.sub(r"[ \t._*-]", "", m.group(0)), t)
+
+
+def _decoded_base64(text: str) -> list[str]:
+    import base64
+    import binascii
+    out = []
+    for m in _B64_TOKEN.finditer(text or ""):
+        tok = m.group(0)
+        try:
+            raw = base64.b64decode(tok + "=" * (-len(tok) % 4), altchars=b"-_" if ("-" in tok or "_" in tok) else None)
+            s = raw.decode("utf-8")
+        except (binascii.Error, ValueError, UnicodeDecodeError):
+            continue
+        printable = sum(ch.isprintable() or ch in "\n\t" for ch in s) / max(len(s), 1)
+        if len(s) >= 12 and printable > 0.95 and " " in s:
+            out.append(s)
+    return out
+
+
+def _views(text: str) -> list[tuple[str, str]]:
+    """The text plus its de-obfuscated views, as (label, text)."""
+    views = [("raw", text or "")]
+    norm = normalise(text)
+    if norm != views[0][1]:
+        views.append(("normalised", norm))
+    leet = norm.translate(_LEET)
+    if leet != norm:
+        views.append(("leetspeak", leet))
+    for decoded in _decoded_base64(text):
+        views.append(("base64", normalise(decoded)))
+    return views
+
+
+def _scan_views(patterns: dict[str, re.Pattern[str]], text: str) -> list[Finding]:
+    found: dict[str, Finding] = {}
+    for label, view in _views(text):
+        for f in _scan(patterns, view):
+            if f.rule not in found:
+                found[f.rule] = f if label == "raw" else Finding(f.rule, f"{f.match} [{label}]"[:120], f.severity)
+    return list(found.values())
+
+
+# ---------------------------------------------------------------------------
 # G1: requirement screening
 # ---------------------------------------------------------------------------
 
@@ -156,7 +229,8 @@ _CRED = r"(api[ _-]?keys?|secret[ _-]?keys?|private[ _-]?keys?|ssh[ _-]?keys?|cr
 _REQUIREMENT_BLOCK = {
     # Exfiltration aimed at the credentials of VEXA / the host it runs on.
     "secret_exfiltration": re.compile(
-        r"(?i)\b(print|show|reveal|leak|send|upload|post|exfiltrate|dump|copy|email|cat)\b[^.\n]{0,40}"
+        r"(?i)\b(print|show|reveal|leak|send|upload|post|exfiltrate|exfil|dump|copy|email|cat|transmit|forward|"
+        r"paste|beam|smuggle|output|write out)\b[^.\n]{0,40}"
         r"(\b(your|vexa'?s?|host'?s?|server'?s?|system'?s?|backend'?s?|this machine'?s?)\s+([^.\n]{0,25}?\s)?" + _CRED +
         r"|" + _CRED + r"\s+(of|from|on|used by)\s+(the\s+|this\s+)?(server|host|system|vexa|backend|machine)\b"
         r"|\bthe\s+\.env\b|\b(os\.environ|environment variables)\b[^.\n]{0,30}\b(to|into)\b[^.\n]{0,20}"
@@ -182,11 +256,11 @@ _CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
 def check_requirement(text: str) -> list[Finding]:
     """All G1 findings (empty list = allowed). ``severity`` is "block" or "review"."""
-    findings = _scan(_REQUIREMENT_BLOCK, text)
+    findings = _scan_views(_REQUIREMENT_BLOCK, text)
     if _CONTROL_CHARS.search(text or ""):
         findings.append(Finding("control_characters", "non-printable control characters"))
     blocked = bool(findings)
-    for f in _scan(_REQUIREMENT_REVIEW, text):
+    for f in _scan_views(_REQUIREMENT_REVIEW, text):
         if not (blocked and f.rule == "credential_handling"):  # already covered by the stricter rule
             findings.append(Finding(f.rule, f.match, "review"))
     return findings
@@ -208,6 +282,15 @@ _INJECTION = {
     "override_instructions": re.compile(
         r"(?i)\b(ignore|disregard|forget|override)\b[^.\n]{0,40}\b(previous|prior|above|earlier|all|your|system)\b"
         r"[^.\n]{0,20}\b(instructions?|prompts?|rules|directions)"),
+    "override_paraphrase": re.compile(
+        r"(?i)(\b(pay no attention to|do not (follow|obey)|don'?t (follow|obey)|stop following|disregard|forget|ignore|"
+        r"skip|discard)\b[^.\n]{0,40}\b(earlier|above|previous|prior|preceding|original|initial)\b[^.\n]{0,20}"
+        r"\b(instructions?|prompts?|rules|directions|guidance|task|messages?|directives?)"
+        r"|\b(forget|disregard|ignore)\s+(everything|all of (this|that|the above)|what you (were|have been) "
+        r"(told|given|asked)))"),
+    "task_redirect": re.compile(
+        r"(?i)(\byour (real|actual|new|true|only) (task|job|instructions?|goal|objective) (is|are|now)\b"
+        r"|\bnew (task|instructions?|objective)\s*:|\bthe user (has )?changed (their|his|her) mind\b)"),
     "role_hijack": re.compile(r"(?i)\b(you are now|from now on you|act as (an?|the) (?!expert))\b"),
     "fake_system_message": re.compile(r"(?i)(<\|im_start\|>|<\|system\|>|\[system\]|^\s*system\s*:|#{2,}\s*(new )?instructions?)",
                                       re.M),
@@ -220,7 +303,7 @@ _INJECTION = {
 
 
 def detect_injection(text: str) -> list[Finding]:
-    return _scan(_INJECTION, text)
+    return _scan_views(_INJECTION, text)
 
 
 def spotlight(tool: str, text: str, findings: list[Finding]) -> str:
@@ -250,8 +333,88 @@ def written_secret(content: str) -> bool:
     return any(s and s in (content or "") for s in known_secrets())
 
 
+# G5 on Python code: the syntax tree resolves import aliases and indirect calls that regexes miss
+# (``import subprocess as sp; sp.run``, ``from os import system``, ``__import__('os')``, ``e = eval``).
+_RISKY_MODULES = {
+    "subprocess": "shell_execution", "pty": "shell_execution", "commands": "shell_execution",
+    "socket": "network_call", "requests": "network_call", "httpx": "network_call", "aiohttp": "network_call",
+    "urllib.request": "network_call", "http.client": "network_call", "ftplib": "network_call",
+    "smtplib": "network_call", "telnetlib": "network_call", "ctypes": "native_code",
+}
+_RISKY_CALLS = {
+    "os.system": "shell_execution", "os.popen": "shell_execution", "os.execv": "shell_execution",
+    "os.execve": "shell_execution", "os.execl": "shell_execution", "os.execvp": "shell_execution",
+    "os.spawnl": "shell_execution", "os.spawnv": "shell_execution", "os.posix_spawn": "shell_execution",
+    "os.environ": "env_access", "os.getenv": "env_access", "os.environb": "env_access",
+    "shutil.rmtree": "recursive_delete", "urllib.request.urlopen": "network_call",
+}
+_DYNAMIC = {"eval": "dynamic_eval", "exec": "dynamic_eval", "compile": "dynamic_eval", "__import__": "dynamic_import"}
+
+
+def _module_rule(module: str) -> str | None:
+    for name, rule in _RISKY_MODULES.items():
+        if module == name or module.startswith(name + "."):
+            return rule
+    return None
+
+
+def _ast_risks(code: str) -> list[Finding]:
+    import ast
+    try:
+        tree = ast.parse(code or "")
+    except (SyntaxError, ValueError):
+        return []  # a fragment (e.g. a patch) — the regexes still apply
+    aliases: dict[str, str] = {}
+    found: dict[str, Finding] = {}
+
+    def add(rule: str, node: ast.AST, what: str) -> None:
+        found.setdefault(rule, Finding(rule, f"line {getattr(node, 'lineno', '?')}: {what}"[:120]))
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for a in node.names:
+                aliases[a.asname or a.name.split(".")[0]] = a.name if a.asname else a.name.split(".")[0]
+                if rule := _module_rule(a.name):
+                    add(rule, node, f"import {a.name}")
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            for a in node.names:
+                qual = f"{node.module}.{a.name}"
+                aliases[a.asname or a.name] = qual
+                if rule := (_module_rule(node.module) or _module_rule(qual) or _RISKY_CALLS.get(qual)):
+                    add(rule, node, f"from {node.module} import {a.name}")
+
+    def qualname(expr: ast.AST) -> str | None:
+        parts = []
+        while isinstance(expr, ast.Attribute):
+            parts.append(expr.attr)
+            expr = expr.value
+        if not isinstance(expr, ast.Name):
+            return None
+        return ".".join([aliases.get(expr.id, expr.id), *reversed(parts)])
+
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Attribute, ast.Name)) and isinstance(getattr(node, "ctx", None), ast.Load):
+            q = qualname(node)
+            if q in _RISKY_CALLS:
+                add(_RISKY_CALLS[q], node, q)
+            elif q and (rule := _module_rule(q)) and isinstance(node, ast.Attribute):
+                add(rule, node, q)
+            if isinstance(node, ast.Name) and node.id in _DYNAMIC and node.id not in aliases:
+                add(_DYNAMIC[node.id], node, node.id)
+        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "getattr"
+                and len(node.args) >= 2):
+            target = qualname(node.args[0]) or ""
+            attr = node.args[1]
+            if target.split(".")[0] in ("os", "subprocess", "builtins") or not isinstance(attr, ast.Constant):
+                add("dynamic_attribute", node, f"getattr({target or '…'}, …)")
+    return list(found.values())
+
+
 def risky_code(content: str) -> list[Finding]:
-    return _scan(_RISKY_CODE, content)
+    found = {f.rule: f for f in _scan(_RISKY_CODE, content)}
+    for f in _ast_risks(content):
+        found.setdefault(f.rule, f)
+    return list(found.values())
 
 
 # ---------------------------------------------------------------------------

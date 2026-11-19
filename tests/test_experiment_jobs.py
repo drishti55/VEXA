@@ -25,7 +25,8 @@ def _wait(client, exp_id, states=("completed", "cancelled", "failed", "interrupt
 
 def test_options_only_lists_real_choices(client):
     o = client.get("/experiments/options").json()
-    assert len(o["tasks"]) == 10
+    from backend.evaluation.benchmark import load_tasks
+    assert sorted(t["id"] for t in o["tasks"]) == sorted(t.id for t in load_tasks())  # 40 on disk
     assert {a["name"] for a in o["architectures"]} == {"sequential", "hierarchical", "event_driven", "blackboard"}
     assert {v["name"] for v in o["prompt_variants"]} == {"baseline", "react", "few_shot", "minimal_persona"}
     assert o["rag"]["available"] is False

@@ -451,6 +451,22 @@ def apply_verification_ground_truth(
     no tests at all (in which case the run can be at most 'partial').
     """
     result.llm_claimed_verified = result.verified
+    if result.criteria:
+        # Per-criterion verdicts are authoritative: verified = every criterion judged satisfied.
+        # The global flag the model also gave stays in llm_claimed_verified.
+        result.verdict_source = "criteria"
+        if not result.requirements_satisfied and not result.requirements_failed:
+            result.requirements_satisfied = [c["criterion"] for c in result.criteria if c.get("satisfied")]
+            result.requirements_failed = [c["criterion"] for c in result.criteria if not c.get("satisfied")]
+        derived = all(bool(c.get("satisfied")) for c in result.criteria)
+        if derived != result.verified:
+            result.errors.append(
+                f"Verifier's global verdict ({result.verified}) disagreed with its per-criterion verdicts; "
+                f"using the per-criterion verdict ({derived}).")
+            result.verified = derived
+            result.status = AgentStatus.success if derived else AgentStatus.failed
+            result.summary = ("Requirements verified and satisfied." if derived
+                              else "Verification failed — requirements not fully met.")
     tests_passed = bool(final_test and final_test.passed)
     no_tests = bool(final_test and final_test.no_tests)
     result.tests_passed = tests_passed
@@ -758,6 +774,7 @@ class SoftwareEngineeringCrew:
             run_id = ctx.run_id
         ctx.execution_mode = execution_mode
         ctx.architecture = arch.name
+        ctx.probe = (metadata or {}).get("probe")
         t_total_start = time.perf_counter()
 
         logger.info("run_started | run_id=%s workspace=%s mode=%s", run_id, workspace_id, execution_mode)
@@ -985,7 +1002,15 @@ class SoftwareEngineeringCrew:
 
     def code(self, ctx: RunContext, kit: WorkspaceToolKit, plan: ImplementationPlan, proj: ProjectAnalysis,
              req: RequirementAnalysis | None = None) -> CodingResult:
-        r = self._run_coder(ctx, kit, plan, proj, req)
+        if getattr(ctx, "probe", None) == "debugger":
+            # Debugger probe (evaluation mode): no Coder attempt, so the Tester sees the task's failing
+            # tests and the Debugger has to repair them. Recorded on the run and in its coordination log.
+            ctx.coordinate("decision", "crewai:runtime", "Coder",
+                           "Debugger probe: Coder skipped; the run starts from the task's failing tests")
+            r = CodingResult(status=AgentStatus.skipped, summary="Skipped (debugger probe): no Coder attempt",
+                             implementation_notes="Debugger probe run")
+        else:
+            r = self._run_coder(ctx, kit, plan, proj, req)
         self._publish(ctx, "code_changes", r, "Coder", ("implementation_plan", "project_analysis"))
         return r
 
@@ -1037,6 +1062,7 @@ class SoftwareEngineeringCrew:
                       "docs_search": bool(real and st.docs_search_api_key),
                       "code_intel": st.tool_transport == "mcp"},
             "verifier_backend": st.verifier_backend,
+            "verifier_fallback": bool(st.verifier_fallback) if st.verifier_backend == "adk_a2a" else None,
             "sandbox_backend": self._svc.sandbox_backend,
             "budgets": {"agent_max_iter": st.agent_max_iter, "debug_max_iter": st.debug_max_iter,
                         "max_run_tokens": st.max_run_tokens,
@@ -1047,7 +1073,8 @@ class SoftwareEngineeringCrew:
             "guardrails": {"version": guardrail_config_version(),
                            "injection_classifier": (st.injection_classifier_model
                                                     if self._injection_classifier(mode) is not None else "off")},
-            "benchmark": {"task_id": metadata.get("task_id"), "content_hash": metadata.get("task_content_hash")},
+            "benchmark": {"task_id": metadata.get("task_id"), "content_hash": metadata.get("task_content_hash"),
+                          **({"probe": metadata["probe"]} if metadata.get("probe") else {})},
             "vexa_version": get_settings().app_version,
         }
         if architecture == "hierarchical" and not real:
@@ -1446,7 +1473,28 @@ class SoftwareEngineeringCrew:
         final_test: AgentTestResult | None,
     ) -> VerificationResult:
         if self._settings.verifier_backend == "adk_a2a":
-            return self._run_remote_verifier(ctx, req, files_changed, final_test)
+            remote = self._run_remote_verifier(ctx, req, files_changed, final_test)
+            if remote.llm_claimed_verified is not None or not self._settings.verifier_fallback:
+                return remote
+            # The ADK Verifier ended without a verdict (it neither accepted nor rejected the work).
+            reason = (remote.errors or [remote.summary])[0][:300]
+            ctx.coordinate("message", "crewai:runtime", "crewai:Verifier",
+                           f"ADK Verifier gave no verdict ({reason}); verifying with the in-process CrewAI Verifier",
+                           protocol="in-process")
+            local = self._run_crewai_verifier(ctx, kit, req, files_changed, final_test)
+            local.remote = {"fallback_from": "adk_a2a", "adk_error": reason, "adk": remote.remote}
+            local.errors.insert(0, f"ADK Verifier failed without a verdict; fell back to CrewAI: {reason}")
+            return local
+        return self._run_crewai_verifier(ctx, kit, req, files_changed, final_test)
+
+    def _run_crewai_verifier(
+        self,
+        ctx: RunContext,
+        kit: WorkspaceToolKit,
+        req: RequirementAnalysis,
+        files_changed: list[str],
+        final_test: AgentTestResult | None,
+    ) -> VerificationResult:
         ctx.agent_started("Verifier")
         t = time.perf_counter()
         logger.info("verification_started | run=%s", ctx.run_id)

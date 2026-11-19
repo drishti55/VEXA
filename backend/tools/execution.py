@@ -237,6 +237,52 @@ class SandboxExecutor(ABC):
 # ---------------------------------------------------------------------------
 
 
+_SEATBELT = "/usr/bin/sandbox-exec"
+# Credential locations a test run never needs to read (relative to the home folder).
+_SECRET_HOME_PATHS = (".ssh", ".aws", ".gnupg", ".netrc", ".docker", ".kube", ".config/gcloud", ".config/gh",
+                      ".git-credentials", ".pypirc", ".npmrc", "Library/Keychains")
+
+
+def _sb_quote(path: str) -> str:
+    return '"' + path.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def seatbelt_profile(workspace: Path, home: str | None = None, extra_denied: list[str] | None = None) -> str:
+    """macOS sandbox profile for one command: everything the host user may do, except
+    - writing outside the workspace and the temp folders,
+    - any network other than localhost (this also blocks DNS),
+    - reading credential files in the home folder and VEXA's own .env.
+    """
+    home = home or os.path.expanduser("~")
+    ws = os.path.realpath(workspace)
+    denied = [os.path.join(home, p) for p in _SECRET_HOME_PATHS] + list(extra_denied or [])
+    tmp_dirs = sorted({"/private/tmp", "/private/var/folders", os.path.realpath(tempfile.gettempdir())})
+    return "".join([
+        "(version 1)(allow default)",
+        "(deny network*)",
+        '(allow network-bind (local ip "localhost:*"))',
+        '(allow network-inbound (local ip "localhost:*"))',
+        '(allow network-outbound (remote ip "localhost:*"))',
+        '(allow network-outbound (remote unix-socket (path-regex #"^/private/(tmp|var/folders)/")))',
+        '(deny file-write* (subpath "/"))',
+        "(allow file-write* (subpath " + _sb_quote(ws) + ")",
+        *[" (subpath " + _sb_quote(d) + ")" for d in tmp_dirs],
+        ' (literal "/dev/null") (literal "/dev/zero") (regex #"^/dev/(tty|fd/|dtracehelper)"))',
+        "(deny file-read* " + " ".join(("(subpath " if not p.endswith((".netrc", ".git-credentials", ".pypirc",
+                                                                       ".npmrc", ".env")) else "(literal ")
+                                       + _sb_quote(p) + ")" for p in denied) + ")",
+    ])
+
+
+def os_confinement() -> str | None:
+    """Name of the OS-level confinement the local backend applies here, or None."""
+    if get_settings().sandbox_os_confinement == "off":
+        return None
+    if sys.platform == "darwin" and os.access(_SEATBELT, os.X_OK):
+        return "seatbelt"
+    return None
+
+
 class LocalSandboxExecutor(SandboxExecutor):
     """
     Runs commands directly on the host using subprocess.
@@ -246,6 +292,11 @@ class LocalSandboxExecutor(SandboxExecutor):
     group (killed as a whole on timeout) and POSIX resource limits
     (CPU seconds, max written file size, address space where the OS honours it).
 
+    On macOS the command is additionally confined with the OS sandbox (see
+    ``seatbelt_profile``): it can write only inside the workspace and the temp
+    folders, has no network except localhost and cannot read credential files.
+    Elsewhere (e.g. Linux) there is no OS confinement; use the docker backend.
+
     For untrusted generated code use DockerSandboxExecutor.
     """
 
@@ -254,6 +305,15 @@ class LocalSandboxExecutor(SandboxExecutor):
     def __init__(self, manager: WorkspaceManager) -> None:
         self._mgr = manager
         self._settings = get_settings()
+        self.confinement = os_confinement()
+        if self.confinement:
+            self.name = f"local+{self.confinement}"
+
+    def _confine(self, argv: list[str], cwd: Path) -> list[str]:
+        if self.confinement != "seatbelt":
+            return argv
+        repo_env = Path(__file__).resolve().parents[2] / ".env"
+        return [_SEATBELT, "-p", seatbelt_profile(cwd, extra_denied=[str(repo_env)]), *argv]
 
     def _preexec(self, timeout: int):
         if os.name != "posix":
@@ -314,7 +374,8 @@ class LocalSandboxExecutor(SandboxExecutor):
         # chatty process cannot exhaust backend memory.
         with tempfile.TemporaryFile() as out_f, tempfile.TemporaryFile() as err_f:
             try:
-                proc = subprocess.Popen(argv, cwd=str(cwd), stdout=out_f, stderr=err_f, env=env, **popen_kwargs)
+                proc = subprocess.Popen(self._confine(argv, cwd), cwd=str(cwd), stdout=out_f, stderr=err_f, env=env,
+                                        **popen_kwargs)
             except FileNotFoundError as exc:
                 return ExecResult(
                     success=False, operation="exec", message=f"Executable not found: {argv[0]}",

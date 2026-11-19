@@ -61,3 +61,4 @@ frontend/dist/
 
 # VEXA run registry (SQLite) and benchmark results
 data/
+.venv.broken/

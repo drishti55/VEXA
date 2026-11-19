@@ -1,0 +1,16 @@
+{
+  "name": "full-real-gpt-oss-20b",
+  "description": "All 40 benchmark tasks x 4 architectures, baseline prompts, groq gpt-oss-20b, 1 repeat. Resumable across days on the free tier.",
+  "execution_mode": "real",
+  "tasks": "all",
+  "architectures": ["sequential", "hierarchical", "event_driven", "blackboard"],
+  "prompt_variants": ["baseline"],
+  "models": [{"provider": "groq", "model": "groq/openai/gpt-oss-20b", "input_cost_per_1m": 0.075, "output_cost_per_1m": 0.30}],
+  "repeats": 1,
+  "seed": 1234,
+  "temperature": 0.1,
+  "debug_max_iter": 3,
+  "tool_transport": "mcp",
+  "verifier_backend": "crewai",
+  "max_cost_usd": 2.0
+}

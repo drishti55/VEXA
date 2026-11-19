@@ -1,0 +1,14 @@
+{
+  "id": "bugfix_slugify",
+  "title": "Fix slugify for punctuation and spacing",
+  "category": "bug_fix",
+  "difficulty": "easy",
+  "requirement": "text.slugify(s) only lowercases and replaces single spaces with '-', so \"  Hello,  World! \" becomes\n\"--hello,--world!-\". It must produce lowercase ASCII letters and digits separated by single hyphens,\nwith no leading or trailing hyphen.",
+  "acceptance_criteria": [
+    "slugify('Hello World') == 'hello-world'",
+    "slugify('  Hello,  World! ') == 'hello-world'",
+    "slugify('Python 3.12 rocks') == 'python-3-12-rocks'"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

@@ -1,0 +1,18 @@
+{
+  "name": "arch-matrix-rerun-after-verifier-fix",
+  "description": "Rerun of exp-20261029-113343-9c4101 after giving the ADK Verifier its run_tests tool; same task, model and settings",
+  "execution_mode": "real",
+  "tasks": ["feature_modulo"],
+  "architectures": ["sequential", "hierarchical", "event_driven", "blackboard"],
+  "prompt_variants": ["baseline"],
+  "models": [{"provider": "groq", "model": "groq/openai/gpt-oss-20b", "input_cost_per_1m": 0.075, "output_cost_per_1m": 0.30}],
+  "repeats": 1,
+  "seed": 1234,
+  "temperature": 0.1,
+  "debug_max_iter": 2,
+  "max_run_seconds": 1500.0,
+  "tool_transport": "mcp",
+  "manager_revision_budget": 2,
+  "verifier_backend": "adk_a2a",
+  "rerun_of": "exp-20261029-113343-9c4101"
+}

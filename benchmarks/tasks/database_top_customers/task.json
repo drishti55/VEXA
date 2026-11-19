@@ -1,0 +1,14 @@
+{
+  "id": "database_top_customers",
+  "title": "Top customers by spend",
+  "category": "database",
+  "difficulty": "medium",
+  "requirement": "orders.py has customers and orders tables. Add top_customers(conn, n) returning a list of (name, total_spent)\ntuples for the n customers with the highest total order value, highest first, ties broken by name.\nCustomers with no orders are excluded. Compute it in SQL (GROUP BY), not in Python loops.",
+  "acceptance_criteria": [
+    "top_customers(conn, 2) == [('cy', 45.0), ('ada', 25.0)]",
+    "ties ordered by name",
+    "customers without orders excluded"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

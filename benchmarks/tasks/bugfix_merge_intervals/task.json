@@ -1,0 +1,14 @@
+{
+  "id": "bugfix_merge_intervals",
+  "title": "Merge unsorted and touching intervals",
+  "category": "bug_fix",
+  "difficulty": "medium",
+  "requirement": "intervals.merge(intervals) assumes the input is sorted and does not merge intervals that only touch\n([1, 4] and [4, 5]). It must accept intervals in any order, merge overlapping or touching ones, return\nthem sorted by start, and not modify the input list.",
+  "acceptance_criteria": [
+    "merge([[8,10],[1,3],[2,6]]) == [[1,6],[8,10]]",
+    "merge([[1,4],[4,5]]) == [[1,5]]",
+    "input not mutated"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

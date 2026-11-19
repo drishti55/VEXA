@@ -469,6 +469,43 @@ class TestVerifier:
         assert result.verification_result.tests_passed is True
 
 
+class TestPerCriterionVerdict:
+    """The Verifier judges each acceptance criterion with evidence; the verdict is derived from those."""
+
+    @staticmethod
+    def _verdict(global_flag, checks):
+        return json.dumps({"verified": global_flag, "evidence": "see criteria",
+                           "criteria": [{"criterion": c, "satisfied": ok, "evidence": f"line for {c}"} for c, ok in checks]})
+
+    def test_criteria_override_a_global_rejection(self, seq_svc_ws):
+        svc, ws_id, _ = seq_svc_ws
+        _ensure_modulo(svc, ws_id)
+        raw = self._verdict(False, [("modulo(10, 3) == 1", True), ("modulo(10, 0) raises ValueError", True)])
+        crew, _ = _make_crew(svc, {**HAPPY_SCRIPTS, "Verifier": [raw]})
+        r = crew.run_task(ws_id, "Add modulo")
+        v = r.verification_result
+        assert v.verified is True and v.verdict_source == "criteria" and v.llm_claimed_verified is False
+        assert v.requirements_satisfied == ["modulo(10, 3) == 1", "modulo(10, 0) raises ValueError"]
+        assert any("disagreed" in e for e in v.errors)
+        assert r.status == AgentStatus.success
+
+    def test_one_unsatisfied_criterion_rejects(self, seq_svc_ws):
+        svc, ws_id, _ = seq_svc_ws
+        _ensure_modulo(svc, ws_id)
+        raw = self._verdict(True, [("modulo(10, 3) == 1", True), ("modulo(10, 0) raises ValueError", False)])
+        crew, _ = _make_crew(svc, {**HAPPY_SCRIPTS, "Verifier": [raw]})
+        v = crew.run_task(ws_id, "Add modulo").verification_result
+        assert v.verified is False and v.requirements_failed == ["modulo(10, 0) raises ValueError"]
+
+    def test_criteria_cannot_overrule_failing_tests(self, broken_ws):
+        svc, ws_id = broken_ws[0], broken_ws[1]
+        raw = self._verdict(True, [("modulo(10, 3) == 1", True)])
+        crew, _ = _make_crew(svc, {**HAPPY_SCRIPTS, "Verifier": [raw],
+                                   "Tester": [json.dumps({"failures": ["x"]})], "Debugger": [CANNED_DEBUG]})
+        v = crew.run_task(ws_id, "Add modulo").verification_result
+        assert v.verified is False and v.tests_passed is False
+
+
 class TestNoTests:
     def test_project_without_tests_is_not_a_pass(self, tmp_path_factory):
         svc = ToolService(workspace_root=str(tmp_path_factory.mktemp("no_tests")))

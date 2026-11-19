@@ -1,0 +1,14 @@
+{
+  "id": "database_atomic_transfer",
+  "title": "Atomic money transfer",
+  "category": "database",
+  "difficulty": "hard",
+  "requirement": "bank.transfer(conn, src, dst, amount) runs two UPDATEs with no checks, so balances can go negative and a\ntransfer to a missing account still debits the source. Make it atomic: raise ValueError and change\nnothing if amount <= 0, either account does not exist, or src has insufficient funds.",
+  "acceptance_criteria": [
+    "valid transfer moves money",
+    "insufficient funds -> ValueError, balances unchanged",
+    "unknown dst -> ValueError, src unchanged"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

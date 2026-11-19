@@ -1,0 +1,14 @@
+{
+  "id": "error_handling_settings_file",
+  "title": "Clear errors when loading settings",
+  "category": "error_handling",
+  "difficulty": "medium",
+  "requirement": "settings.load_settings(path) lets FileNotFoundError and json.JSONDecodeError escape. A missing file must\nreturn {}. Invalid JSON, or JSON whose top level is not an object, must raise settings.SettingsError (a new\nexception class) whose message includes the file path.",
+  "acceptance_criteria": [
+    "missing file -> {}",
+    "invalid JSON -> SettingsError mentioning the path",
+    "non-object JSON -> SettingsError"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

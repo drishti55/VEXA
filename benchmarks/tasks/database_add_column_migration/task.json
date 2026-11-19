@@ -1,0 +1,14 @@
+{
+  "id": "database_add_column_migration",
+  "title": "Idempotent migration: add email column",
+  "category": "database",
+  "difficulty": "medium",
+  "requirement": "db.py creates a users(id, name) table. Add migrate(conn) that adds a nullable TEXT column `email`\nto users. It must be idempotent (running it twice is fine) and keep existing rows.",
+  "acceptance_criteria": [
+    "after migrate, users has an email column",
+    "migrate twice does not raise",
+    "existing rows kept"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

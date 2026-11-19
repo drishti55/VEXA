@@ -15,6 +15,9 @@ POST   /workspaces/{id}/read            read a file
 POST   /workspaces/{id}/write           write a file
 POST   /workspaces/{id}/patch           patch a file
 DELETE /workspaces/{id}/files           delete a file
+POST   /workspaces/{id}/mkdir           create a folder (editor only)
+POST   /workspaces/{id}/rename          rename / move a file or folder (editor only)
+DELETE /workspaces/{id}/dirs            delete a folder (editor only)
 POST   /workspaces/{id}/search          search source code
 GET    /workspaces/{id}/inspect         project overview
 GET    /workspaces/{id}/git/status      git status
@@ -91,6 +94,19 @@ class PatchFileRequest(BaseModel):
 
 class DeleteFileRequest(BaseModel):
     path: str
+
+
+class MkdirRequest(BaseModel):
+    path: str = Field(min_length=1, max_length=1024)
+
+
+class RenameRequest(BaseModel):
+    src: str = Field(min_length=1, max_length=1024)
+    dst: str = Field(min_length=1, max_length=1024)
+
+
+class DeleteDirRequest(BaseModel):
+    path: str = Field(min_length=1, max_length=1024)
 
 
 class SearchRequest(BaseModel):
@@ -271,6 +287,63 @@ def delete_file(workspace_id: str, body: DeleteFileRequest) -> dict:
     if not result.success:
         raise _tool_error(result.message)
     return result.model_dump()
+
+
+# Editor-only operations (explorer: new folder, rename/move, delete folder). Agents never get
+# these: they are not in guardrails.TOOL_POLICY. Every path goes through the workspace boundary
+# check, and the repository root and git metadata can never be touched.
+
+def _resolve_editable(workspace_id: str, path: str):
+    if not _svc.workspace_exists(workspace_id):
+        raise _not_found(workspace_id)
+    try:
+        target = _svc._manager.resolve_path(workspace_id, path)
+        root = _svc._manager.require(workspace_id).resolve()
+    except WorkspaceSecurityError as exc:
+        raise _security_error(str(exc))
+    rel = target.relative_to(root)
+    if target == root or ".git" in rel.parts:
+        raise _security_error("the workspace root and .git cannot be modified from the editor")
+    return target, root
+
+
+@router.post("/{workspace_id}/mkdir", status_code=status.HTTP_201_CREATED)
+def make_directory(workspace_id: str, body: MkdirRequest) -> dict:
+    """Create a folder (and missing parents) inside the workspace."""
+    target, root = _resolve_editable(workspace_id, body.path)
+    if target.exists():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"'{body.path}' already exists")
+    target.mkdir(parents=True)
+    return {"success": True, "path": target.relative_to(root).as_posix()}
+
+
+@router.post("/{workspace_id}/rename")
+def rename_path(workspace_id: str, body: RenameRequest) -> dict:
+    """Rename or move a file or folder within the workspace. Never overwrites."""
+    src, root = _resolve_editable(workspace_id, body.src)
+    dst, _ = _resolve_editable(workspace_id, body.dst)
+    if not src.exists():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"'{body.src}' does not exist")
+    if dst.exists():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"'{body.dst}' already exists")
+    if src.is_dir() and dst.is_relative_to(src):
+        raise _tool_error("cannot move a folder into itself")
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    src.rename(dst)
+    return {"success": True, "src": src.relative_to(root).as_posix(), "dst": dst.relative_to(root).as_posix()}
+
+
+@router.delete("/{workspace_id}/dirs")
+def delete_directory(workspace_id: str, body: DeleteDirRequest) -> dict:
+    """Delete a folder and everything in it (the explorer asks the user to confirm first)."""
+    import shutil
+
+    target, root = _resolve_editable(workspace_id, body.path)
+    if not target.is_dir():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"'{body.path}' is not a folder")
+    removed = sum(1 for p in target.rglob("*") if p.is_file())
+    shutil.rmtree(target)
+    return {"success": True, "path": target.relative_to(root).as_posix(), "files_removed": removed}
 
 
 # ---------------------------------------------------------------------------

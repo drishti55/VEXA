@@ -44,7 +44,7 @@ from backend.agents.crew import SoftwareEngineeringCrew
 from backend.agents.prompt_variants import PROMPT_VARIANTS
 from backend.core.logging import get_logger
 from backend.db.registry import RunRegistry, get_registry
-from backend.evaluation.benchmark import DEFAULT_TASKS_DIR, grade, load_tasks, materialise
+from backend.evaluation.benchmark import DEFAULT_TASKS_DIR, add_probe_tests, grade, load_tasks, materialise
 from backend.orchestration import ARCHITECTURES
 from backend.tools.service import ToolService
 
@@ -92,6 +92,12 @@ class ExperimentConfig(BaseModel):
         description="Rerun: prompt variant → archived prompt version to use instead of the current prompts",
     )
     rerun_of: str | None = Field(default=None, description="Experiment id this configuration was copied from")
+    probe: Literal["none", "debugger"] = Field(
+        default="none",
+        description="'debugger': bug-fix tasks start with their failing tests in tests/ and the Coder is skipped, "
+                    "so every trial exercises the Debugger from a real failure. Probe runs are labelled and "
+                    "excluded from the Coder's evaluation.",
+    )
 
     @field_validator("name")
     @classmethod
@@ -118,7 +124,9 @@ class ExperimentConfig(BaseModel):
 
     @property
     def config_hash(self) -> str:
-        return hashlib.sha256(self.model_dump_json().encode()).hexdigest()[:16]
+        # 'probe' joins the hash only when used, so hashes of earlier experiments stay the same.
+        exclude = {"probe"} if self.probe == "none" else None
+        return hashlib.sha256(self.model_dump_json(exclude=exclude).encode()).hexdigest()[:16]
 
 
 class Trial(BaseModel):
@@ -210,6 +218,8 @@ def _settings_for(cfg: ExperimentConfig, trial: Trial, api_key: str | None = Non
     s.llm_provider, s.llm_model = trial.model.provider, trial.model.model
     s.llm_input_cost_per_1m, s.llm_output_cost_per_1m = trial.model.input_cost_per_1m, trial.model.output_cost_per_1m
     s.llm_temperature = cfg.temperature
+    # A trial is labelled with exactly one model: never fail over to another one mid-run.
+    s.llm_fallback_model = s.llm_fallback_provider = s.llm_fallback_api_key = None
     s.debug_max_iter = max(cfg.debug_max_iter, 1)
     s.max_run_seconds = cfg.max_run_seconds
     s.tool_transport = cfg.tool_transport
@@ -237,6 +247,14 @@ def validate_config(cfg: ExperimentConfig, *, api_key_available: bool | None = N
         task_ids = []
     if not cfg.architectures:
         errors.append("choose at least one architecture")
+    if cfg.probe == "debugger" and task_ids:
+        not_bugfix = [t.id for t in load_tasks(cfg.tasks_dir or DEFAULT_TASKS_DIR, task_ids) if t.category != "bug_fix"]
+        if not_bugfix:
+            errors.append("the debugger probe needs bug-fix tasks (a failing test is a bug to fix); not bug-fix: "
+                          + ", ".join(not_bugfix))
+        if "hierarchical" in cfg.architectures:
+            errors.append("the debugger probe cannot use hierarchical: it skips the Coder, which the Manager may choose; "
+                          "use sequential, event_driven or blackboard")
     if cfg.prompt_version_pins:
         from backend.agents.prompt_variants import get_prompt_set
         from backend.db.registry import get_registry
@@ -324,6 +342,8 @@ def run_experiment(
         status = "cancelled"
     except _BudgetReached:
         status = "stopped_budget"
+    except _ProviderLimit as exc:
+        status, error = "stopped_rate_limit", str(exc)
     except Exception as exc:  # recorded on the experiment, re-raised for the caller
         status, error = "failed", f"{type(exc).__name__}: {exc}"
         registry.update_progress(exp_id)
@@ -336,6 +356,20 @@ def run_experiment(
 
 class _BudgetReached(Exception):
     pass
+
+
+class _ProviderLimit(Exception):
+    """The provider refused calls (rate limit / daily quota). The trial is not an agent outcome."""
+
+
+def provider_limit_error(errors: list[str]) -> str | None:
+    """The first run error caused by a provider rate limit or quota, if any."""
+    from backend.agents.config import _is_quota, _is_rate_limit
+    for e in errors or []:
+        low = e.lower()
+        if _is_quota(low) or _is_rate_limit(low) or "resource_exhausted" in low:
+            return e
+    return None
 
 
 def new_experiment_id() -> str:
@@ -354,14 +388,28 @@ def _run_trials(cfg, trials, tasks, done, registry, svc, crew_factory, raw_path,
             raise _BudgetReached()
         task = tasks[trial.task_id]
         ws = materialise(task, svc)
+        if cfg.probe == "debugger":
+            add_probe_tests(task, svc, ws)
         settings = _settings_for(cfg, trial, api_key)
         crew = crew_factory(svc, settings, trial, task) if crew_factory else SoftwareEngineeringCrew(
             tool_service=svc, settings=settings)
         meta = {"experiment_id": exp_id, "trial_key": trial.key, "task_id": task.id,
                 "repeat_index": trial.repeat_index, "config_hash": cfg.config_hash, "task_category": task.category,
                 "task_content_hash": task.content_hash}
+        if cfg.probe != "none":
+            meta["probe"] = cfg.probe
         result = crew.run_task(ws, task.requirement, cfg.execution_mode, architecture=trial.architecture,
                                metadata=meta)
+        limit = provider_limit_error(result.errors) if cfg.execution_mode == "real" else None
+        if limit:
+            # Not an agent failure: keep it out of the trials (resume retries it) but keep a record.
+            with (raw_path.parent / "excluded_runs.jsonl").open("a") as fh:
+                fh.write(json.dumps({"trial": trial.key, "run_id": result.run_id, "reason": "provider_limit",
+                                     "error": limit[:500], "at": datetime.now(UTC).isoformat()}) + "\n")
+            svc.destroy_workspace(ws)
+            logger.warning("experiment_provider_limit | id=%s trial=%s", exp_id, trial.key)
+            raise _ProviderLimit(f"provider limit at trial {i}/{len(trials)} ({trial.key}); "
+                                 f"resume once the quota resets: {limit[:300]}")
         g = grade(task, svc, ws)
         model_condition = trial.model.label if cfg.execution_mode == "real" else "mock:scripted"
         grading = {**g.model_dump(mode="json"), "trial_key": trial.key, "model_condition": model_condition,

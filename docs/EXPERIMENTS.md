@@ -11,7 +11,7 @@
 | `hidden_tests/` | grading tests; never copied into an agent workspace |
 | `solution/` | reference solution, used only to validate the task |
 
-There are 10 tasks covering bug fix, feature (×2), error handling, refactoring, API, security, performance, configuration and database. `tests/test_evaluation.py::test_every_task_is_valid` checks three properties for every task: the visible tests pass on the starting repo, the hidden tests fail on it, and the reference solution passes everything.
+There are 40 tasks: bug fix (6), feature (7), API, database, error handling, performance, refactoring and security (4 each), and configuration (3). Difficulty: 17 easy, 20 medium, 3 hard. `scripts/gen_benchmark_tasks.py` generated the 30 added in November 2026. `tests/test_evaluation.py::test_every_task_is_valid` checks three properties for every task: the visible tests pass on the starting repo, the hidden tests fail on it, and the reference solution passes everything.
 
 To add a task, create the four parts and run that test.
 

@@ -63,9 +63,27 @@ locally installed Google Chrome. The test suite never reads `.env` (`VEXA_ENV_FI
 
 Mock runs never build an LLM client and never touch the network. An unknown `execution_mode` is rejected (HTTP 422) rather than silently falling back to either mode.
 
+### VEXA Studio (the default UI)
+
+http://localhost:5173 opens **VEXA Studio**, a VS Code-style IDE: activity bar, file explorer (create, rename, move, delete — through the workspace API), Monaco editor with tabs and ⌘S save, search, read-only git view, a bottom panel (Problems, Output, Debug Console, sandboxed Terminal, Agent Logs, Test Results, Execution Trace) and an **Agent Runs** panel to start runs and watch them live over SSE (per-agent status, input/output, tool calls by transport, guardrail decisions, the architecture's own workflow and a merged timeline). ⇧⌘P opens the command palette, ⌘P goes to a file, ⌘B / ⌘J / ⌥⌘B toggle the panels. The terminal runs only the backend's sandboxed `pytest`; there is no general shell. `GET /system/status` feeds the status bar and the Monitoring view.
+
+Inspection views (all computed from the run registry on request, real and mock runs never mixed):
+
+| Activity | What it shows | API |
+|---|---|---|
+| Agents | each agent's role, inputs/outputs (Pydantic schemas), tools (from `TOOL_POLICY` + MCP definitions), guardrail checkpoints, prompt per variant and version history, internal architecture with every stage linked to its source line, execution history | `GET /agents`, `/agents/{name}`, `/agents/{name}/prompt`, `/agents/{name}/prompt-history` |
+| Evaluation | 34 per-agent criteria with definition, method, formula, data source, score, sample size, 95% CI and trend; "Not Evaluated" with the missing data where no valid method exists; model comparison; failure clusters | `GET /evaluation/agents`, `/evaluation/models`, `/evaluation/failures` |
+| Benchmarks | cases vs runs, coverage, case inspector (expected vs actual, diffs), architecture comparison with Wilson/Newcombe intervals | `GET /benchmarks/overview`, `/benchmarks/cases[/{id}]`, `/benchmarks/compare` |
+| Extensions | VEXA's modules: files, classes, functions, endpoints, data models, imports in both directions, entry points, related tests, runtime evidence | `GET /extensions[/{id}]` |
+| Monitoring | system status, dashboard, G1–G10 guardrail inspector (heuristic vs deterministic, decisions, retries, implementation links) | `GET /system/status`, `/dashboard/summary`, `/guardrails`, `/guardrails/events` |
+
+Run tabs also offer a diff view of the run's changes, a filterable span waterfall, a replay of the recorded events (not a new run) and a side-by-side comparison with another run. `#` in the command palette searches runs, cases, agents, guardrails and source files (`GET /search`). VEXA's own source opens read-only through `GET /source/file` (allow-listed directories; `.env`, databases and key files are refused).
+
+The previous dashboard is still available at http://localhost:5173/?classic.
+
 ### Running a task
 
-In the dashboard pick a workspace, an **architecture**, a **prompt strategy**, the **Verifier** (Google ADK over A2A, or CrewAI) and **agent tools** (MCP or direct), enter the requirement and click **RUN VEXA**. For real mode, enter a model and use **Test model** first (a 1-token call) — the provider is inferred from the model prefix.
+In the classic dashboard pick a workspace, an **architecture**, a **prompt strategy**, the **Verifier** (Google ADK over A2A, or CrewAI) and **agent tools** (MCP or direct), enter the requirement and click **RUN VEXA**. For real mode, enter a model and use **Test model** first (a 1-token call) — the provider is inferred from the model prefix.
 
 Tabs: **Overview** (the actual dispatch sequence, incl. manager revisions), **Coordination** (manager decisions/reviews/briefs, events, A2A and MCP traffic), **State** (blackboard read/write matrix), **Trace** (span hierarchy, per-agent metrics, tool calls, errors/retries, guardrail decisions), **Report** (JSON/Markdown download). Use *Open a previous run* to reload any persisted run; the dashboard opens empty, it does not re-open the last run.
 

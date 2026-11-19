@@ -117,6 +117,13 @@ class Settings(BaseSettings):
         description="Execution sandbox backend. 'local' = subprocess on host. "
                     "'docker' = throwaway container with no network.",
     )
+    sandbox_os_confinement: str = Field(
+        default="auto",
+        pattern="^(auto|off)$",
+        description="Local backend: confine each command with the OS sandbox where one exists "
+                    "(macOS sandbox-exec): writes only in the workspace and temp folders, no network "
+                    "except localhost, no reading of credential files. 'off' disables it.",
+    )
     sandbox_docker_binary: str = Field(
         default="docker",
         description="docker CLI name or absolute path (e.g. "

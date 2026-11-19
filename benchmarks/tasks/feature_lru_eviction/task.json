@@ -1,0 +1,15 @@
+{
+  "id": "feature_lru_eviction",
+  "title": "LRU eviction for the cache",
+  "category": "feature",
+  "difficulty": "hard",
+  "requirement": "cache.Cache(capacity) stores values with put(key, value) and get(key, default=None) but never evicts.\nMake it a least-recently-used cache: when a put would exceed capacity, evict the least recently used\nkey. Both get (on a hit) and put count as a use. len(cache) returns the number of stored keys.\ncapacity < 1 raises ValueError.",
+  "acceptance_criteria": [
+    "capacity respected",
+    "get refreshes recency",
+    "updating a key refreshes it",
+    "Cache(0) raises ValueError"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

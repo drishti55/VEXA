@@ -38,7 +38,7 @@ def svc(tmp_path_factory):
 
 def test_task_set_shape():
     tasks = load_tasks()
-    assert len(tasks) == 10
+    assert len(tasks) == 40
     assert len({t.category for t in tasks}) >= 8
     for t in tasks:
         assert t.requirement and t.acceptance_criteria and t.hidden_dir.is_dir() and t.solution_dir.is_dir()
@@ -192,9 +192,104 @@ def test_exports(experiment):
 
 def test_api(client):
     assert isinstance(client.get("/experiments").json(), list)
-    assert len(client.get("/experiments/benchmark/tasks").json()) == 10
+    assert len(client.get("/experiments/benchmark/tasks").json()) == 40
     r = client.post("/experiments", json={"config": {"name": "x", "execution_mode": "real"}})
     assert r.status_code == 422 and "API key" in r.json()["detail"]  # validated before anything starts
     r = client.post("/experiments", json={"config": {"name": "x", "execution_mode": "real"}, "llm_api_key": "sk-test-abcdefgh"})
     assert r.status_code == 400 and "confirm_real_cost" in r.json()["detail"]
     assert client.get("/experiments/nope/summary").status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Provider limits are not agent outcomes
+# ---------------------------------------------------------------------------
+
+QUOTA_ERR = ("AI Provider Error: Rate limit reached for model `openai/gpt-oss-20b` service tier `on_demand` "
+             "on tokens per day (TPD): Limit 200000, Used 199995, Requested 824.")
+
+
+def _limited_factory(fail_on: set[int]):
+    """Scripted crew (no network) whose Nth run reports a provider quota error, as a real run would."""
+    calls = {"n": 0}
+
+    def factory(svc_, settings, trial, task):
+        crew = SoftwareEngineeringCrew(tool_service=svc_, settings=_make_settings(), responder=None)
+        original = crew.run_task
+
+        def run_task(ws, requirement, mode, architecture, metadata=None):
+            calls["n"] += 1
+            result = original(ws, requirement, "mock", architecture=architecture, metadata=metadata)
+            if calls["n"] in fail_on:
+                result.errors.append(QUOTA_ERR)
+            return result
+
+        crew.run_task = run_task
+        return crew
+    return factory
+
+
+def test_provider_limit_stops_without_recording_and_resume_finishes(tmp_path, svc):
+    reg = RunRegistry(f"sqlite:///{tmp_path / 'lim.sqlite3'}")
+    cfg = ExperimentConfig(name="quota", execution_mode="real", tasks=["feature_modulo"],
+                           architectures=["sequential", "hierarchical"], repeats=2, tool_transport="direct")
+    exp_id = run_experiment(cfg, registry=reg, svc=svc, crew_factory=_limited_factory({3}), out_dir=tmp_path,
+                            api_key="gsk-test-key-0000")
+    exp = reg.get_experiment(exp_id)
+    assert exp["status"] == "stopped_rate_limit" and "tokens per day" in exp["error"]
+    assert len(reg.list_runs(experiment_id=exp_id)) == 2          # trials 1-2 kept, the quota-hit trial is not
+    excluded = (tmp_path / exp_id / "excluded_runs.jsonl").read_text().splitlines()
+    assert len(excluded) == 1 and json.loads(excluded[0])["reason"] == "provider_limit"
+
+    run_experiment(cfg, registry=reg, svc=svc, crew_factory=_limited_factory(set()), out_dir=tmp_path,
+                   resume=exp_id, api_key="gsk-test-key-0000")
+    assert reg.get_experiment(exp_id)["status"] == "completed"
+    assert len(reg.list_runs(experiment_id=exp_id)) == 4           # the skipped trial was retried
+    assert not any("Rate limit" in e for r in load_rows(exp_id, reg) for e in (r.get("errors") or []))
+
+
+def test_experiment_trials_never_fail_over_to_another_model():
+    from backend.evaluation.experiment import _settings_for
+    cfg = ExperimentConfig(name="x", execution_mode="real",
+                           models=[{"provider": "groq", "model": "groq/openai/gpt-oss-20b"}])
+    trial = plan_trials(cfg, ["feature_modulo"])[0]
+    s = _settings_for(cfg, trial, "gsk-test-key-0000")
+    assert s.llm_model == "groq/openai/gpt-oss-20b" and s.llm_fallback_model is None
+
+
+def test_debugger_probe_starts_from_failing_tests_and_skips_the_coder(tmp_path, svc):
+    """Debugger probe: the Coder does not run, the Tester sees the task's real failing tests and the
+    Debugger is invoked in every trial. The runs are labelled and kept out of the Coder's evaluation."""
+    from backend.evaluation.agent_eval import RunRow, TaskTruth, evaluate
+    reg = RunRegistry(f"sqlite:///{tmp_path / 'probe.sqlite3'}")
+    cfg = ExperimentConfig(name="probe", execution_mode="mock", tasks=["bugfix_leap_year"],
+                           architectures=["sequential", "event_driven", "blackboard"], tool_transport="direct",
+                           debug_max_iter=1, probe="debugger")
+    exp_id = run_experiment(cfg, registry=reg, svc=svc, out_dir=tmp_path)
+    runs = load_rows(exp_id, reg)
+    assert len(runs) == 3
+    rows = []
+    for r in runs:
+        full = reg.get_run(r["run_id"]).model_dump(mode="json")
+        assert full["coding_result"]["status"] == "skipped"
+        assert full["initial_test_result"]["passed"] is False      # real failing tests, not scripted
+        assert full["debug_iterations"] >= 1                         # the Debugger was reached
+        assert full["metadata"]["probe"] == "debugger" and full["config"]["benchmark"]["probe"] == "debugger"
+        rows.append(RunRow(run_id=r["run_id"], mode="real", status=full["status"], architecture=full["architecture"],
+                           started_at=None, task_id="bugfix_leap_year", grading={"task_success": False, "regression": False},
+                           result=full))
+    crit = {c["id"]: c for c in evaluate(rows, {"bugfix_leap_year": TaskTruth("bugfix_leap_year", ["x"], set(), set())})}
+    assert crit["co.task_success"]["real"]["n"] == 0        # probe runs say nothing about the Coder
+    assert crit["db.fix_success"]["real"]["n"] == 3         # ...but all three count for the Debugger
+
+
+def test_debugger_probe_config_is_validated():
+    from backend.evaluation.experiment import validate_config
+    bad = validate_config(ExperimentConfig(name="p", tasks=["feature_modulo"], architectures=["hierarchical"],
+                                           probe="debugger"))
+    assert not bad["valid"]
+    assert any("bug-fix tasks" in e for e in bad["errors"]) and any("hierarchical" in e for e in bad["errors"])
+    ok = ExperimentConfig(name="p", tasks=["bugfix_slugify"], probe="debugger")
+    assert validate_config(ok)["valid"]
+    # 'probe' does not change the hash of ordinary configurations
+    plain = ExperimentConfig(name="p")
+    assert plain.config_hash == ExperimentConfig.model_validate({"name": "p", "probe": "none"}).config_hash

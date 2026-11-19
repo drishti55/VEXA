@@ -1,0 +1,14 @@
+{
+  "id": "performance_prime_sieve",
+  "title": "Fast primes below n",
+  "category": "performance",
+  "difficulty": "medium",
+  "requirement": "primes.primes_below(n) tests every number by trial division against all smaller numbers and is far\ntoo slow for n = 1_000_000. Return the same sorted list of primes < n, fast enough that n = 1_000_000\nfinishes in under 2 seconds (e.g. a Sieve of Eratosthenes).",
+  "acceptance_criteria": [
+    "len(primes_below(1_000_000)) == 78498 in < 2 s",
+    "primes_below(20) == [2, 3, 5, 7, 11, 13, 17, 19]",
+    "primes_below(2) == []"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

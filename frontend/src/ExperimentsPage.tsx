@@ -304,7 +304,7 @@ export function ExperimentsPage({ onOpenRun }: { onOpenRun: (runId: string) => v
                     .then(r => { refresh(); select(r.experiment_id); }).catch(e => setError(e.message))}
                   className="px-3 py-1.5 text-xs rounded border border-vexa-border flex items-center gap-1"><RefreshCw className="w-3 h-3" />Rerun</button>
               )}
-              {['cancelled', 'interrupted', 'failed', 'stopped_budget'].includes(current.status) && (
+              {['cancelled', 'interrupted', 'failed', 'stopped_budget', 'stopped_rate_limit'].includes(current.status) && (
                 <button onClick={() => VexaApi.resumeExperiment(current.experiment_id, apiKey).then(refresh).catch(e => setError(e.message))}
                   className="px-3 py-1.5 text-xs rounded border border-vexa-border flex items-center gap-1"><RotateCcw className="w-3 h-3" />Resume missing trials</button>
               )}

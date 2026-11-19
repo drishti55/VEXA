@@ -1,0 +1,14 @@
+{
+  "id": "bugfix_leap_year",
+  "title": "Fix leap-year rule for centuries",
+  "category": "bug_fix",
+  "difficulty": "easy",
+  "requirement": "dates.is_leap(year) only checks divisibility by 4, so 1900 and 2100 are wrongly leap years.\nApply the Gregorian rule: divisible by 4, except centuries, unless divisible by 400.",
+  "acceptance_criteria": [
+    "is_leap(2024) is True",
+    "is_leap(1900) is False",
+    "is_leap(2000) is True"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

@@ -1,0 +1,14 @@
+{
+  "id": "performance_pair_sums",
+  "title": "Count pairs with a target sum in linear time",
+  "category": "performance",
+  "difficulty": "medium",
+  "requirement": "pairs.count_pairs(nums, target) counts index pairs i < j with nums[i] + nums[j] == target using a\nnested loop. Make it linear-time so 100_000 numbers finish in under a second; duplicates must be\ncounted correctly.",
+  "acceptance_criteria": [
+    "count_pairs([1, 1, 1], 2) == 3",
+    "count_pairs([1, 2, 3, 4], 5) == 2",
+    "100_000 items in < 1 s"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

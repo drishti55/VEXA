@@ -108,8 +108,16 @@ class DebugOutput(_LLMOutput):
     files_changed: list[FileChangeOutput] = Field(default_factory=list)
 
 
+class CriterionCheck(_LLMOutput):
+    """The Verifier's judgement of ONE acceptance criterion, with the evidence it is based on."""
+    criterion: str
+    satisfied: bool
+    evidence: str = ""
+
+
 class VerifierOutput(_LLMOutput):
     verified: bool
+    criteria: list[CriterionCheck] = Field(default_factory=list)
     requirements_satisfied: list[str] = Field(default_factory=list)
     requirements_failed: list[str] = Field(default_factory=list)
     tests_passed: bool = False

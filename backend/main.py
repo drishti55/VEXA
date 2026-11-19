@@ -20,7 +20,12 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.api.agent_runs import router as agent_runs_router
 from backend.api.experiments import router as experiments_router
+from backend.api.evaluation import router as evaluation_router
 from backend.api.health import router as health_router
+from backend.api.inspect_api import router as inspect_router
+from backend.api.agents import router as agents_router
+from backend.api.source import router as source_router
+from backend.api.system import router as system_router
 from backend.api.workspaces import router as workspaces_router
 from backend.core.config import get_settings
 from backend.core.logging import get_logger
@@ -118,6 +123,11 @@ def create_app() -> FastAPI:
     app.include_router(workspaces_router)
     app.include_router(agent_runs_router)
     app.include_router(experiments_router)
+    app.include_router(system_router)
+    app.include_router(source_router)
+    app.include_router(agents_router)
+    app.include_router(evaluation_router)
+    app.include_router(inspect_router)
 
     # Single-service deployments (e.g. Render): serve the built dashboard from the same origin.
     # Mounted last, so every API route above takes precedence.

@@ -1,0 +1,14 @@
+{
+  "id": "refactor_tax_constant",
+  "title": "Extract the tax rate constant",
+  "category": "refactoring",
+  "difficulty": "easy",
+  "requirement": "invoice.py hard-codes the 20% tax rate (0.2) in subtotal_with_tax, tax_amount and line_total.\nIntroduce a module-level TAX_RATE = 0.2 and use it everywhere, so changing TAX_RATE changes all three.\nBehaviour with the default rate must not change.",
+  "acceptance_criteria": [
+    "invoice.TAX_RATE == 0.2",
+    "all three functions read TAX_RATE",
+    "results unchanged"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

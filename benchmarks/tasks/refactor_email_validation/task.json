@@ -1,0 +1,14 @@
+{
+  "id": "refactor_email_validation",
+  "title": "Deduplicate email validation",
+  "category": "refactoring",
+  "difficulty": "easy",
+  "requirement": "accounts.register(user) and accounts.update_email(user, email) each contain the same inline email check.\nExtract validate_email(email) -> bool (true when there is exactly one '@' with a non-empty local part and\na domain containing a '.') and call it from both. Behaviour must not change.",
+  "acceptance_criteria": [
+    "validate_email('a@b.co') is True",
+    "validate_email('a@b') is False",
+    "both callers use validate_email"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

@@ -1,0 +1,14 @@
+{
+  "id": "error_handling_retry",
+  "title": "Retry transient connection errors",
+  "category": "error_handling",
+  "difficulty": "medium",
+  "requirement": "net.fetch_with_retry(fn, attempts=3) calls fn() once. It must retry only on ConnectionError, calling fn\nat most `attempts` times, return the first successful result, and re-raise the last ConnectionError if\nevery attempt fails. Other exceptions propagate immediately without retrying.",
+  "acceptance_criteria": [
+    "fails twice then succeeds -> result",
+    "always failing -> ConnectionError after exactly 3 calls",
+    "ValueError not retried"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

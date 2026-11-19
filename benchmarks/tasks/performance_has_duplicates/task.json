@@ -1,0 +1,14 @@
+{
+  "id": "performance_has_duplicates",
+  "title": "Linear-time duplicate check",
+  "category": "performance",
+  "difficulty": "easy",
+  "requirement": "listutil.has_duplicates(items) compares every pair, so 200_000 items never finish. Make it run in linear\ntime (well under a second for 200_000 hashable items) without changing results.",
+  "acceptance_criteria": [
+    "200_000 unique ints finish in < 1 s and return False",
+    "[1, 2, 1] -> True",
+    "[] -> False"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

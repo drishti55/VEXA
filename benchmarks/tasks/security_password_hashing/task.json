@@ -1,0 +1,14 @@
+{
+  "id": "security_password_hashing",
+  "title": "Hash stored passwords",
+  "category": "security",
+  "difficulty": "medium",
+  "requirement": "auth.UserStore keeps passwords in plain text. Store a salted hash instead: hashlib.pbkdf2_hmac('sha256', ...)\nwith at least 100_000 iterations and a random 16-byte salt per user (os.urandom). verify(username, password)\nmust still work and return False for unknown users.",
+  "acceptance_criteria": [
+    "stored value never contains the password",
+    "same password -> different stored values",
+    "verify works; wrong password False"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

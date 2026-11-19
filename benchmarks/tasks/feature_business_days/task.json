@@ -1,0 +1,15 @@
+{
+  "id": "feature_business_days",
+  "title": "Count business days between dates",
+  "category": "feature",
+  "difficulty": "medium",
+  "requirement": "workdays.py has days_between(start, end). Add business_days(start, end, holidays=()) that counts\nMonday\u2013Friday dates from start to end inclusive, excluding any date in holidays. If end is before\nstart, return 0.",
+  "acceptance_criteria": [
+    "Mon..Fri of one week == 5",
+    "a full two-week span == 10",
+    "holidays excluded",
+    "end < start -> 0"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

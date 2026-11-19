@@ -1,0 +1,14 @@
+{
+  "id": "api_rate_limiter",
+  "title": "Per-client rate limiter",
+  "category": "api",
+  "difficulty": "medium",
+  "requirement": "ratelimit.RateLimiter(limit, window_seconds, clock=time.monotonic).allow(client_id) currently always\nreturns True. Implement a sliding window: a client may make at most `limit` allowed requests in any\nwindow of `window_seconds`; denied requests do not count. Clients are independent. Use the injected\nclock so it can be tested.",
+  "acceptance_criteria": [
+    "first `limit` requests allowed, next denied",
+    "allowed again after the window passes",
+    "clients independent"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

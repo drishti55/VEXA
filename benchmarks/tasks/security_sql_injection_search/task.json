@@ -1,0 +1,14 @@
+{
+  "id": "security_sql_injection_search",
+  "title": "Fix SQL injection in product search",
+  "category": "security",
+  "difficulty": "medium",
+  "requirement": "products.search(conn, term) builds its LIKE query with an f-string, so a term such as \"%' OR 1=1 --\"\nreturns every row and a term with an apostrophe crashes. Use a parameterised query. Results are names\ncontaining term (case-insensitive), sorted alphabetically.",
+  "acceptance_criteria": [
+    "search(conn, 'ap') == ['apple', 'apricot']",
+    "injection term returns []",
+    "\"Bob's\" finds \"Bob's widget\""
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

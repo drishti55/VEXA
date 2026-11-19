@@ -237,6 +237,12 @@ class VerificationResult(AgentResult):
     files_changed: list[str] = Field(default_factory=list)
     remaining_risks: list[str] = Field(default_factory=list)
     evidence: str = ""
+    criteria: list[dict[str, Any]] = Field(
+        default_factory=list, description="Per-criterion verdicts: {criterion, satisfied, evidence}",
+    )
+    verdict_source: str = Field(
+        default="global", description="'criteria' = verified derived from the per-criterion verdicts; 'global' = the single flag",
+    )
     backend: str = Field(default="crewai", description="'crewai' or 'adk_a2a' (Google ADK agent over A2A)")
     remote: dict[str, Any] | None = Field(default=None, description="A2A exchange metadata when backend=adk_a2a")
 

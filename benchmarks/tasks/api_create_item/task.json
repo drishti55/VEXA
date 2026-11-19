@@ -1,0 +1,14 @@
+{
+  "id": "api_create_item",
+  "title": "Add POST /items",
+  "category": "api",
+  "difficulty": "medium",
+  "requirement": "api.handle(method, path) serves GET /items/<id>. Add an optional body argument: handle(method, path, body=None).\nPOST /items with body {'name': ...} creates an item with the next integer id and returns\n(201, {'id': id, 'name': name}); a missing or blank name returns (400, {'error': 'name required'}).\nThe created item is then readable with GET /items/<id>.",
+  "acceptance_criteria": [
+    "POST /items -> 201 with new id",
+    "missing name -> 400",
+    "GET /items/<new id> returns it"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

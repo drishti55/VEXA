@@ -282,8 +282,13 @@ def build_llm_verifier(model: Any, svc: ToolService | None = None) -> LlmAgent:
                                    "start_ns": start, "end_ns": time.time_ns(), "blocked": True})
             return {"ok": False, "error": denial}
         res = fn()
-        body = json.dumps({"ok": True, "operation": name, "data": res.data} if res.success
-                          else {"ok": False, "operation": name, "error": res.message}, default=str)
+        if hasattr(res, "exit_code"):  # ExecResult (run_tests): same JSON shape as the CrewAI tool
+            body = json.dumps({"ok": res.success, "operation": name, "exit_code": res.exit_code,
+                               "success": res.success, "stdout": res.stdout, "stderr": res.stderr,
+                               "duration_ms": res.duration_ms, "timed_out": res.timed_out}, default=str)
+        else:
+            body = json.dumps({"ok": True, "operation": name, "data": res.data} if res.success
+                              else {"ok": False, "operation": name, "error": res.message}, default=str)
         tel.tool_calls.append({"tool": name, "args": args, "ok": res.success, "summary": (res.message or "")[:300],
                                "start_ns": start, "end_ns": time.time_ns()})
         out = enforce_tool_output(tel, name, body)
@@ -305,6 +310,11 @@ def build_llm_verifier(model: Any, svc: ToolService | None = None) -> LlmAgent:
     def inspect_project(tool_context: ToolContext) -> dict[str, Any]:
         """Overview of the project: languages, file counts, important files."""
         return _call(tool_context, "inspect_project", {}, lambda: svc.inspect_project(_ws(tool_context)))
+
+    def run_tests(tool_context: ToolContext, test_path: str = ".") -> dict[str, Any]:
+        """Run the project's pytest suite in the sandbox; exit_code 0 means all tests passed."""
+        return _call(tool_context, "run_tests", {"test_path": test_path},
+                     lambda: svc.run_tests(_ws(tool_context), test_path=test_path, extra_args=[]))
 
     def before_model(callback_context: CallbackContext, llm_request: Any) -> None:
         _telemetry_for(callback_context.invocation_id)._llm_start_ns = time.time_ns()
@@ -371,7 +381,9 @@ def build_llm_verifier(model: Any, svc: ToolService | None = None) -> LlmAgent:
         description="Verifies that a software change satisfies its acceptance criteria (VEXA Verifier).",
         model=model,
         instruction=instruction,
-        tools=[read_file, list_files, git_diff, inspect_project],  # = TOOL_POLICY["Verifier"] read-only subset
+        # = TOOL_POLICY["Verifier"] minus the A2A transport itself. run_tests must be here: the shared
+        # Verifier prompt tells the model to call it, and without it the provider rejects the call.
+        tools=[read_file, list_files, git_diff, inspect_project, run_tests],
         before_agent_callback=bind_request,
         before_model_callback=before_model,
         after_model_callback=after_model,

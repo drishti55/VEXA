@@ -62,7 +62,7 @@ def mock_verifier():
         yield srv.url
 
 
-def _crew(tmp_path, url, token=TOKEN, broken=False, scripts=None):
+def _crew(tmp_path, url, token=TOKEN, broken=False, scripts=None, fallback=False):
     svc = ToolService(workspace_root=str(tmp_path))
     ws = svc.create_workspace()
     shutil.copytree(str(FIXTURE), str(svc._manager.require(ws)), dirs_exist_ok=True)
@@ -71,6 +71,7 @@ def _crew(tmp_path, url, token=TOKEN, broken=False, scripts=None):
     settings = _make_settings(debug_max_iter=1)
     settings.verifier_backend, settings.a2a_verifier_url, settings.a2a_token = "adk_a2a", url, token
     settings.a2a_embedded = False  # these tests target an external A2A server
+    settings.verifier_fallback = fallback  # most tests check the ADK path itself
     responder = ScriptedResponder(scripts or {k: v for k, v in HAPPY_SCRIPTS.items() if k != "Verifier"})
     return SoftwareEngineeringCrew(tool_service=svc, settings=settings, responder=responder), ws, responder
 
@@ -118,6 +119,19 @@ class TestCrewAIToADK:
         crew, ws, _ = _crew(tmp_path, f"http://127.0.0.1:{_free_port()}")
         r = crew.run_task(ws, "Add a modulo function")
         assert r.verification_result.verified is False and r.verification_result.errors
+
+    def test_no_verdict_falls_back_to_crewai_verifier(self, tmp_path):
+        """The ADK Verifier is unreachable (no verdict): the CrewAI Verifier verifies instead, and the
+        run records that it did."""
+        crew, ws, responder = _crew(tmp_path, f"http://127.0.0.1:{_free_port()}", fallback=True,
+                                    scripts=dict(HAPPY_SCRIPTS))
+        r = crew.run_task(ws, "Add a modulo function")
+        v = r.verification_result
+        assert v.verified is True and v.backend == "crewai" and r.status == AgentStatus.success
+        assert v.remote["fallback_from"] == "adk_a2a" and v.remote["adk_error"]
+        assert "fell back to CrewAI" in v.errors[0]
+        assert "Verifier" in [a for a, _ in responder.calls]
+        assert any("in-process CrewAI Verifier" in c["detail"] for c in r.coordination_log if c["kind"] == "message")
 
     def test_works_under_blackboard(self, tmp_path, mock_verifier):
         crew, ws, _ = _crew(tmp_path, mock_verifier)
@@ -168,6 +182,51 @@ def test_adk_llm_agent_uses_workspace_tool_over_a2a(tmp_path, monkeypatch):
         assert len(llm._requests) == 2
         system = llm._requests[0].config.system_instruction
         assert "Expert Software Requirements Verifier" in str(system)  # same prompt as the CrewAI verifier
+    finally:
+        get_settings.cache_clear()
+
+
+class RunTestsAdkLlm(BaseLlm):
+    """Turn 1: call run_tests (as the shared Verifier prompt instructs). Turn 2: verdict from its output."""
+
+    _requests: list[LlmRequest] = PrivateAttr(default_factory=list)
+
+    async def generate_content_async(self, llm_request: LlmRequest, stream: bool = False) -> AsyncGenerator[LlmResponse, None]:
+        self._requests.append(llm_request)
+        if len(self._requests) == 1:
+            part = types.Part(function_call=types.FunctionCall(name="run_tests", args={}))
+        else:
+            seen = json.dumps([c.model_dump(mode="json") for c in llm_request.contents])
+            part = types.Part(text=json.dumps({"verified": '\\"exit_code\\": 0' in seen,
+                                               "requirements_satisfied": ["tests pass"],
+                                               "evidence": "ran run_tests via ADK tool"}))
+        yield LlmResponse(content=types.Content(role="model", parts=[part]))
+
+
+def test_adk_verifier_has_run_tests_tool(tmp_path, monkeypatch):
+    """Real-mode regression (29 Oct runs): the shared Verifier prompt says 'run_tests', but the ADK
+    verifier did not offer that tool, so Groq rejected the call and verification crashed even though
+    the hidden tests passed. The ADK verifier now exposes run_tests behind the same G2 policy."""
+    svc = ToolService(workspace_root=str(tmp_path))
+    ws = svc.create_workspace()
+    shutil.copytree(str(FIXTURE), str(svc._manager.require(ws)), dirs_exist_ok=True)
+    monkeypatch.setenv("WORKSPACE_ROOT", str(tmp_path))
+    from backend.core.config import get_settings
+    get_settings.cache_clear()
+    try:
+        llm = RunTestsAdkLlm(model="fake-adk-model")
+        port = _free_port()
+        with _Server(create_verifier_app("real", port=port, token=TOKEN, model=llm), port) as srv:
+            settings = _make_settings()
+            settings.verifier_backend, settings.a2a_verifier_url, settings.a2a_token = "adk_a2a", srv.url, TOKEN
+            settings.a2a_embedded = False
+            responder = ScriptedResponder({k: v for k, v in HAPPY_SCRIPTS.items() if k != "Verifier"})
+            r = SoftwareEngineeringCrew(tool_service=svc, settings=settings, responder=responder).run_task(
+                ws, "Add a modulo function")
+        offered = llm._requests[0].tools_dict
+        assert "run_tests" in offered, sorted(offered)
+        assert r.verification_result.verified is True, r.verification_result
+        assert r.status == AgentStatus.success
     finally:
         get_settings.cache_clear()
 

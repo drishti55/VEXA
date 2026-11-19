@@ -1,0 +1,14 @@
+{
+  "id": "feature_stack_peek",
+  "title": "Add peek, is_empty and len to Stack",
+  "category": "feature",
+  "difficulty": "easy",
+  "requirement": "stack.Stack supports push and pop. Add peek() (return the top item without removing it), is_empty(),\nand len(stack). pop() and peek() on an empty stack must raise IndexError(\"empty stack\").",
+  "acceptance_criteria": [
+    "peek returns top without removing",
+    "len(s) counts items",
+    "pop/peek on empty raise IndexError('empty stack')"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

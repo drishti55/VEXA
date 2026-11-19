@@ -1,0 +1,14 @@
+{
+  "id": "refactor_shape_dispatch",
+  "title": "Replace if/elif chain with a dispatch table",
+  "category": "refactoring",
+  "difficulty": "medium",
+  "requirement": "shapes.area(shape) picks the formula with an if/elif chain on shape['kind']. Refactor it to look the\nformula up in a module-level dict AREA_FUNCS (kind -> function taking the shape dict), so new kinds can\nbe registered without editing area(). Unknown kinds still raise ValueError. Results must not change.",
+  "acceptance_criteria": [
+    "AREA_FUNCS has circle, square, rectangle",
+    "registering AREA_FUNCS['triangle'] makes area() support it",
+    "unknown kind -> ValueError"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

@@ -65,8 +65,23 @@ Your output MUST be a raw text JSON object (Do NOT attempt to call a tool named 
 RULES:
 - Be specific. Vague items like "improve code" are NOT acceptable.
 - Acceptance criteria must be TESTABLE (e.g., 'modulo(10, 3) == 1').
+- Write ONE acceptance criterion per behaviour the requirement names, including every
+  error case and every "existing behaviour stays the same" condition.
+- Write each criterion as a call with concrete arguments and its exact expected outcome:
+  `name(args) == value`, `name(args) raises ErrorType('exact message')`, or
+  `METHOD /path -> status code`. Reuse the exact function names, values and messages
+  from the requirement; do not paraphrase them.
 - If there are no ambiguities, return an empty list.
 - Do NOT add any text outside the JSON object.
+
+EXAMPLES OF TESTABLE ACCEPTANCE CRITERIA:
+Requirement: "Add is_even(n) to numbers.py; it must raise TypeError('n must be an int') for floats."
+  -> "is_even(4) == True", "is_even(7) == False", "is_even(2.5) raises TypeError('n must be an int')"
+Requirement: "Fix slugify() so that it lower-cases and replaces spaces with '-'; keep punctuation removal."
+  -> "slugify('Hello World') == 'hello-world'", "slugify('Hi, there!') == 'hi-there'"
+Requirement: "Add GET /items/{{id}} returning 404 when the item does not exist."
+  -> "GET /items/1 -> 200 with the item as JSON", "GET /items/999 -> 404"
+NOT testable (never write these): "the function works correctly", "errors are handled", "code is clean".
 """
 
 # ---------------------------------------------------------------------------
@@ -389,6 +404,10 @@ Inspect the workspace and verify each acceptance criterion:
 
 Your output MUST be a raw text JSON object (Do NOT attempt to call a tool named 'json'):
 {{
+  "criteria": [
+    {{"criterion": "<one acceptance criterion, copied exactly>", "satisfied": true | false,
+      "evidence": "<the code line, file or test output that shows it>"}}
+  ],
   "verified": true | false,
   "requirements_satisfied": ["list", "of", "satisfied", "criteria"],
   "requirements_failed": ["list", "of", "unmet", "criteria"],
@@ -399,6 +418,10 @@ Your output MUST be a raw text JSON object (Do NOT attempt to call a tool named 
 }}
 
 RULES:
+- Judge EVERY acceptance criterion separately in "criteria", one entry each, with concrete evidence.
+  A criterion is satisfied when the code or test output shows it; do not reject a criterion only
+  because a test for it is missing if the code clearly implements it.
+- The run's verdict is computed from your per-criterion judgements: verified = all criteria satisfied.
 - verified=true ONLY if ALL acceptance_criteria are satisfied AND tests pass.
 - Do NOT set verified=true if any criterion is not met.
 - requirements_failed must list specific unmet criteria, not vague issues.

@@ -1,0 +1,14 @@
+{
+  "id": "api_path_parameters",
+  "title": "Path parameters in the router",
+  "category": "api",
+  "difficulty": "hard",
+  "requirement": "router.Router matches only exact paths. Support path parameters: a pattern segment written {name}\nmatches any single non-empty segment and is passed to the handler as a keyword argument (string).\nStatic routes keep working; a path with a different number of segments does not match (404).\ndispatch returns (status, body) and handlers return the body.",
+  "acceptance_criteria": [
+    "/users/{id} matches /users/42 with id='42'",
+    "/users/42/extra -> 404",
+    "multiple params: /a/{x}/b/{y}"
+  ],
+  "ground_truth": "",
+  "timeout_seconds": 120
+}

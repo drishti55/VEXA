@@ -108,6 +108,28 @@ def materialise(task: BenchmarkTask, svc: ToolService, workspace_id: str | None 
     return ws
 
 
+PROBE_PREFIX = "test_probe_"
+
+
+def add_probe_tests(task: BenchmarkTask, svc: ToolService, workspace_id: str) -> list[str]:
+    """Debugger probe: copy the task's hidden tests into tests/ so the run starts from real failing tests.
+
+    The grader still runs the original hidden tests from the task directory, and a copy the agents
+    edited cannot help: grade() replaces the hidden-test path and the copies are renamed.
+    """
+    repo = svc._manager.require(workspace_id)
+    (repo / "tests").mkdir(exist_ok=True)
+    added = []
+    for src in sorted(task.hidden_dir.rglob("*.py")):
+        name = src.name if src.name == "conftest.py" else PROBE_PREFIX + src.name.removeprefix("test_")
+        dst = repo / "tests" / name
+        if dst.exists():
+            continue
+        shutil.copy2(src, dst)
+        added.append(f"tests/{name}")
+    return added
+
+
 def cleanup_orphan_workspaces(svc: ToolService) -> list[str]:
     """Remove trial/grading workspaces left by a process that died mid-experiment.
 
