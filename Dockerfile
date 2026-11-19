@@ -6,7 +6,7 @@ RUN npm ci --no-audit --no-fund
 COPY frontend/ ./
 # Same origin as the API (empty base URL). Defaults suit small hosts; override with --build-arg.
 ARG VITE_DEFAULT_VERIFIER=adk_a2a
-ARG VITE_DEFAULT_TOOL_TRANSPORT=mcp
+ARG VITE_DEFAULT_TOOL_TRANSPORT=direct
 ENV VITE_VEXA_API_URL="" \
     VITE_DEFAULT_VERIFIER=$VITE_DEFAULT_VERIFIER \
     VITE_DEFAULT_TOOL_TRANSPORT=$VITE_DEFAULT_TOOL_TRANSPORT
@@ -38,6 +38,12 @@ COPY --from=frontend /frontend/dist ./frontend/dist
 # Writable state lives under /data (mount a disk there to keep it across restarts)
 ENV WORKSPACE_ROOT=/data/workspaces \
     VEXA_DB_PATH=/data/vexa.sqlite3
+
+# Defaults that fit a small (512 MB) host; values set in the host's environment take precedence.
+# Direct tools avoid three MCP subprocesses per run; the Google ADK Verifier runs embedded (A2A).
+ENV VEXA_TOOL_TRANSPORT=direct \
+    VEXA_VERIFIER_BACKEND=adk_a2a \
+    VEXA_MAX_RUN_TOKENS=120000
 
 USER vexa
 EXPOSE 8000

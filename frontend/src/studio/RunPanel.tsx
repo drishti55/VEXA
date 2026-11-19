@@ -6,6 +6,8 @@ import { useStudio, useLiveRuns, setState, loadRecentRuns, openRun, watchRun, to
 import { StatusDot, timeAgo, runRequirement, runStartedAt } from './util';
 import { ConfirmDialog } from './common';
 import { LivePreview } from './views/LivePreview';
+import { ModelKeySettings } from './views/SettingsView';
+import { useLlmCredentials, modelForKey } from './llmCredentials';
 
 interface Options { architectures: Option[]; promptVariants: Option[] }
 
@@ -84,12 +86,15 @@ function Composer({ opts }: { opts: Options }) {
   const [promptVariant, setPromptVariant] = useState('baseline');
   const [verifier, setVerifier] = useState(import.meta.env.VITE_DEFAULT_VERIFIER || 'adk_a2a');
   const [transport, setTransport] = useState(import.meta.env.VITE_DEFAULT_TOOL_TRANSPORT || 'mcp');
-  const [model, setModel] = useState('');
-  const [apiKey, setApiKey] = useState('');      // kept in memory only, never persisted
+  const cred = useLlmCredentials();               // model + key from Settings (kept in this browser only)
+  const apiKey = cred.apiKey;
+  const model = modelForKey(cred.apiKey, cred.model);
+  const [serverLlm, setServerLlm] = useState<{ configured: boolean; model?: string } | null>(null);
+  useEffect(() => { VexaApi.systemStatus().then(s => setServerLlm({ configured: s.llm.status === 'configured', model: s.llm.model })).catch(() => {}); }, []);
+  const needsKey = mode === 'real' && serverLlm !== null && !serverLlm.configured && !apiKey;
   const [category, setCategory] = useState('');
   const [showConfig, setShowConfig] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [modelTest, setModelTest] = useState<string | null>(null);
   const [g1, setG1] = useState<{ message: string; findings: any[] } | null>(null);
   const [unsaved, setUnsaved] = useState<string[] | null>(null);
 
@@ -119,14 +124,6 @@ function Composer({ opts }: { opts: Options }) {
     } finally { setBusy(false); }
   };
 
-  const testModel = async () => {
-    setModelTest('Testing…');
-    try {
-      const r = await VexaApi.testModel(model || undefined, apiKey || undefined);
-      setModelTest(r.ok ? `✓ ${r.model} (${r.provider}) answered in ${Math.round(r.latency_ms ?? 0)} ms` : `✗ ${r.model} (${r.provider}): ${r.error}`);
-    } catch (e: any) { setModelTest(`✗ ${e.message}`); }
-  };
-
   const chip = (label: string, value: string, set: (v: string) => void, options: { name: string; description?: string }[], testId: string) => (
     <label className="st-pill" style={{ height: 22, cursor: 'pointer', position: 'relative' }} title={options.find(o => o.name === value)?.description}>
       {label}: <b style={{ color: 'var(--text)' }}>{value}</b>
@@ -154,15 +151,19 @@ function Composer({ opts }: { opts: Options }) {
             <label>Task category (optional) <input className="st-input" value={category} onChange={e => setCategory(e.target.value)} placeholder="e.g. bugfix" style={{ width: '100%', boxSizing: 'border-box' }} /></label>
             {mode === 'real' && (
               <>
-                <label>Model <input className="st-input" data-testid="llm-model" value={model} onChange={e => setModel(e.target.value)} placeholder="server default (VEXA_LLM_MODEL)" style={{ width: '100%', boxSizing: 'border-box' }} /></label>
-                <label>API key (optional, sent with this run only, never stored) <input className="st-input" type="password" autoComplete="off" value={apiKey} onChange={e => setApiKey(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} /></label>
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                  <button className="st-btn secondary" style={{ height: 22 }} onClick={testModel}>Test model</button>
-                  {modelTest && <span style={{ color: modelTest.startsWith('✓') ? 'var(--ok)' : modelTest.startsWith('✗') ? 'var(--err)' : undefined }}>{modelTest}</span>}
-                </div>
+                <ModelKeySettings compact serverKey={serverLlm?.configured} serverModel={serverLlm?.model} />
               </>
             )}
           </div>
+        )}
+        {needsKey && !showConfig && (
+          <div data-testid="needs-api-key" style={{ padding: '8px 10px', borderBottom: '1px solid var(--border)', fontSize: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span style={{ flex: 1 }}>Real mode needs an LLM API key — the server has none.</span>
+            <button className="st-btn" style={{ height: 22 }} data-testid="add-api-key" onClick={() => setShowConfig(true)}>Add API key</button>
+          </div>
+        )}
+        {mode === 'real' && apiKey && !showConfig && (
+          <div className="st-faint" data-testid="key-in-use" style={{ padding: '6px 10px 0', fontSize: 11.5 }}>Using your API key · {model || 'server default model'}</div>
         )}
         <textarea className="st-textarea" data-testid="requirement" rows={3} value={requirement}
           placeholder={workspaceId ? `Describe a change for the agents to make in ${workspaceId}…` : 'Open a workspace first'}

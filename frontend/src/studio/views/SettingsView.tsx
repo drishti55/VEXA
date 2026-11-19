@@ -5,6 +5,7 @@ import type { SystemStatus } from '../../api/client';
 import { useStudio, setState, setTheme, openRun } from '../store';
 import type { EditorPrefs } from '../store';
 import { timeAgo } from '../util';
+import { useLlmCredentials, setLlmCredentials, clearLlmCredentials, MODEL_PRESETS, modelForKey } from '../llmCredentials';
 
 function Head({ title, children }: { title: string; children?: React.ReactNode }) {
   return <div className="st-head"><span className="title">{title}</span>{children}</div>;
@@ -64,6 +65,7 @@ export function SettingsView() {
           <Field label="Minimap"><input type="checkbox" checked={prefs.minimap} onChange={e => setPref({ minimap: e.target.checked })} data-testid="setting-minimap" /></Field>
           <Field label="Word wrap"><input type="checkbox" checked={prefs.wordWrap} onChange={e => setPref({ wordWrap: e.target.checked })} data-testid="setting-word-wrap" /></Field>
         </Group>
+        <ModelKeySettings serverKey={sys?.llm.status === 'configured'} serverModel={sys?.llm.model} />
         <Group title="Layout">
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             <button className="st-btn secondary" onClick={() => setState({ sidebarWidth: 280, panelHeight: 240, rightWidth: 360, sidebarVisible: true, panelVisible: true, rightVisible: true })}>Reset layout</button>
@@ -116,4 +118,53 @@ export function NotificationList({ compact }: { compact?: boolean }) {
     </div>
   );
   return compact ? body : <Group title={`Notifications (${items.length})`}>{body}</Group>;
+}
+
+
+/** Model + API key for real runs, kept in this browser and sent with each run only. */
+export function ModelKeySettings({ serverKey, serverModel, compact = false }: { serverKey?: boolean; serverModel?: string; compact?: boolean }) {
+  const cred = useLlmCredentials();
+  const [show, setShow] = useState(false);
+  const [test, setTest] = useState<string | null>(null);
+  const model = modelForKey(cred.apiKey, cred.model);
+  const runTest = async () => {
+    setTest('Testing…');
+    try {
+      const r = await VexaApi.testModel(model || undefined, cred.apiKey || undefined);
+      setTest(r.ok ? `✓ ${r.model} answered in ${Math.round(r.latency_ms ?? 0)} ms` : `✗ ${r.model}: ${r.error}`);
+    } catch (e: any) { setTest(`✗ ${e.message}`); }
+  };
+  const body = (
+    <>
+      <div className="st-faint" style={{ fontSize: 11.5 }}>
+        {serverKey ? `The server has its own key (${serverModel}). A key here overrides it for your runs.` : 'The server has no LLM key. Add one here to run real agents.'}
+        {' '}The key stays in this browser and is sent only with each run; the server never stores it.
+      </div>
+      <label style={{ fontSize: 12.5 }}>Model
+        <input className="st-input" list="vexa-model-presets" data-testid="settings-llm-model" value={cred.model}
+          placeholder={model || 'e.g. groq/openai/gpt-oss-20b'} onChange={e => setLlmCredentials({ model: e.target.value })}
+          style={{ width: '100%', boxSizing: 'border-box', marginTop: 3 }} />
+        <datalist id="vexa-model-presets">{MODEL_PRESETS.map(p => <option key={p.model} value={p.model}>{p.label}</option>)}</datalist>
+      </label>
+      <label style={{ fontSize: 12.5 }}>API key
+        <div style={{ display: 'flex', gap: 6, marginTop: 3 }}>
+          <input className="st-input" data-testid="settings-llm-key" type={show ? 'text' : 'password'} autoComplete="off" spellCheck={false}
+            value={cred.apiKey} placeholder="gsk_… (Groq), AIza… (Gemini), sk-… (OpenAI)" onChange={e => { setLlmCredentials({ apiKey: e.target.value.trim() }); setTest(null); }}
+            style={{ flex: 1, minWidth: 0 }} />
+          <button type="button" className="st-btn secondary" style={{ height: 26 }} onClick={() => setShow(v => !v)}>{show ? 'Hide' : 'Show'}</button>
+        </div>
+      </label>
+      <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 12.5 }}>
+        <input type="checkbox" checked={cred.remember} onChange={e => setLlmCredentials({ remember: e.target.checked })} data-testid="settings-llm-remember" />
+        Remember on this device (otherwise cleared when the tab closes)
+      </label>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+        <button type="button" className="st-btn" style={{ height: 26 }} disabled={!cred.apiKey && !serverKey} onClick={runTest} data-testid="settings-llm-test">Test key</button>
+        <button type="button" className="st-btn secondary" style={{ height: 26 }} disabled={!cred.apiKey && !cred.model} onClick={() => { clearLlmCredentials(); setTest(null); }}>Clear</button>
+        {test && <span data-testid="settings-llm-test-result" style={{ fontSize: 12, color: test.startsWith('✓') ? 'var(--ok)' : test.startsWith('✗') ? 'var(--err)' : undefined }}>{test}</span>}
+      </div>
+    </>
+  );
+  if (compact) return <div style={{ display: 'grid', gap: 6 }}>{body}</div>;
+  return <Group title="Model & API key (real runs)">{body}</Group>;
 }
