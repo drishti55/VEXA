@@ -30,7 +30,7 @@ from __future__ import annotations
 
 
 from fastapi import APIRouter, HTTPException, status
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, Field
 
 from backend.core.logging import get_logger
@@ -221,7 +221,48 @@ def serve_workspace_file(workspace_id: str, file_path: str):
         raise _security_error("Path traversal attempt")
     if not target.is_file():
         raise HTTPException(status_code=404, detail="File not found")
+    if target.suffix.lower() in (".html", ".htm"):
+        try:
+            html = target.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            html = None
+        if html is not None:
+            return HTMLResponse(inject_storage_shim(html), headers=_PREVIEW_HEADERS)
     return FileResponse(path=str(target), headers=_PREVIEW_HEADERS)
+
+
+# The preview runs with an opaque origin (CSP sandbox without allow-same-origin), where the
+# browser throws on any access to localStorage / sessionStorage. Apps that keep their data
+# there (notes, to-do lists, trackers) would crash on load. This shim, added only to served
+# HTML and only when real storage is blocked, gives them a Storage that lives in window.name,
+# so data survives preview reloads, scoped per workspace. Files on disk are not changed.
+_STORAGE_SHIM = """<script data-vexa-preview-shim>(function(){
+try{window.localStorage.getItem('__vexa');return;}catch(e){}
+var all={};try{all=JSON.parse(window.name||'{}');}catch(e){all={};}
+if(!all||typeof all!=='object'||Array.isArray(all)){all={};}
+var ns=location.pathname.split('/').slice(0,3).join('/');
+function store(kind){var k=kind+':'+ns;var d=all[k]=(all[k]&&typeof all[k]==='object')?all[k]:{};
+function save(){try{window.name=JSON.stringify(all);}catch(e){}}
+var s={getItem:function(x){x=String(x);return Object.prototype.hasOwnProperty.call(d,x)?d[x]:null;},
+setItem:function(x,v){d[String(x)]=String(v);save();},removeItem:function(x){delete d[String(x)];save();},
+clear:function(){Object.keys(d).forEach(function(x){delete d[x];});save();},
+key:function(i){var ks=Object.keys(d);return i>=0&&i<ks.length?ks[i]:null;}};
+Object.defineProperty(s,'length',{get:function(){return Object.keys(d).length;}});return s;}
+try{Object.defineProperty(window,'localStorage',{value:store('local'),configurable:true});}catch(e){}
+try{Object.defineProperty(window,'sessionStorage',{value:store('session'),configurable:true});}catch(e){}
+})();</script>"""
+
+
+def inject_storage_shim(html: str) -> str:
+    """Insert the storage shim before any script of the page runs."""
+    import re
+    m = re.search(r"<head[^>]*>", html, re.IGNORECASE)
+    if m:
+        return html[:m.end()] + _STORAGE_SHIM + html[m.end():]
+    m = re.search(r"<html[^>]*>", html, re.IGNORECASE)
+    if m:
+        return html[:m.end()] + _STORAGE_SHIM + html[m.end():]
+    return _STORAGE_SHIM + html
 
 
 # ---------------------------------------------------------------------------
